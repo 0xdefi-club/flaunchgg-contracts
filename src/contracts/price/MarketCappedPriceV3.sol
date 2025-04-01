@@ -8,11 +8,10 @@ import {IUniswapV3Pool} from '@uniswap/v3-core/contracts/interfaces/IUniswapV3Po
 import {FullMath} from '@uniswap/v4-core/src/libraries/FullMath.sol';
 import {TickMath} from '@uniswap/v4-core/src/libraries/TickMath.sol';
 
-import {FlaunchFeeExemption} from '@flaunch/price/FlaunchFeeExemption.sol';
 import {TokenSupply} from '@flaunch/libraries/TokenSupply.sol';
+import {FlaunchFeeExemption} from '@flaunch/price/FlaunchFeeExemption.sol';
 
 import {IInitialPrice} from '@flaunch-interfaces/IInitialPrice.sol';
-
 
 /**
  * This contract defines an initial flaunch price by finding the ETH equivalent price of
@@ -23,7 +22,6 @@ import {IInitialPrice} from '@flaunch-interfaces/IInitialPrice.sol';
  * cap.
  */
 contract MarketCappedPriceV3 is IInitialPrice, Ownable {
-
     error InvalidTokenPair();
     error MarketCapTooSmall(uint _usdcMarketCap, uint _usdcMarketCapMinimum);
 
@@ -59,7 +57,7 @@ contract MarketCappedPriceV3 is IInitialPrice, Ownable {
      * @param _usdcToken The USDC token used in the Pool
      * @param _flaunchFeeExemption The {FlaunchFeeExemption} contract address
      */
-    constructor (address _protocolOwner, address _ethToken, address _usdcToken, address _flaunchFeeExemption) {
+    constructor(address _protocolOwner, address _ethToken, address _usdcToken, address _flaunchFeeExemption) {
         // Set our tokens
         ethToken = _ethToken;
         usdcToken = _usdcToken;
@@ -97,7 +95,11 @@ contract MarketCappedPriceV3 is IInitialPrice, Ownable {
      *
      * @return sqrtPriceX96_ The `sqrtPriceX96` value
      */
-    function getSqrtPriceX96(address /* _sender */, bool _flipped, bytes calldata _initialPriceParams) public view returns (uint160 sqrtPriceX96_) {
+    function getSqrtPriceX96(
+        address, /* _sender */
+        bool _flipped,
+        bytes calldata _initialPriceParams
+    ) public view returns (uint160 sqrtPriceX96_) {
         return _calculateSqrtPriceX96(getMarketCap(_initialPriceParams), TokenSupply.INITIAL_SUPPLY, !_flipped);
     }
 
@@ -108,7 +110,9 @@ contract MarketCappedPriceV3 is IInitialPrice, Ownable {
      *
      * @param _pool The new Uniswap V3 pool address
      */
-    function setPool(address _pool) public onlyOwner {
+    function setPool(
+        address _pool
+    ) public onlyOwner {
         pool = IUniswapV3Pool(_pool);
 
         // Ensure the token pair is ETH : USDC
@@ -128,7 +132,9 @@ contract MarketCappedPriceV3 is IInitialPrice, Ownable {
      *
      * @return uint The ETH value of the market cap
      */
-    function getMarketCap(bytes calldata _initialPriceParams) public view returns (uint) {
+    function getMarketCap(
+        bytes calldata _initialPriceParams
+    ) public view returns (uint) {
         // Decode our initial price parameters to give the USDC value requested
         (MarketCappedPriceParams memory params) = abi.decode(_initialPriceParams, (MarketCappedPriceParams));
 
@@ -139,7 +145,7 @@ contract MarketCappedPriceV3 is IInitialPrice, Ownable {
 
         uint32[] memory secondsAgos = new uint32[](2);
         secondsAgos[0] = 1800; // 30 minutes ago
-        secondsAgos[1] = 0;    // now
+        secondsAgos[1] = 0; // now
 
         (int56[] memory tickCumulatives,) = pool.observe(secondsAgos);
 
@@ -152,9 +158,8 @@ contract MarketCappedPriceV3 is IInitialPrice, Ownable {
 
         // This is the price of ETH in USDC terms
         uint priceX96 = FullMath.mulDiv(sqrtPriceX96, sqrtPriceX96, 1 << 96);
-        uint ethUSDCPrice = (usdcToken0)
-            ? FullMath.mulDiv(1e18, 1 << 96, priceX96)
-            : FullMath.mulDiv(1e18, priceX96, 1 << 96);
+        uint ethUSDCPrice =
+            (usdcToken0) ? FullMath.mulDiv(1e18, 1 << 96, priceX96) : FullMath.mulDiv(1e18, priceX96, 1 << 96);
 
         return FullMath.mulDiv(params.usdcMarketCap, 1e18, ethUSDCPrice);
     }
@@ -169,7 +174,11 @@ contract MarketCappedPriceV3 is IInitialPrice, Ownable {
      *
      * @return sqrtPriceX96_ The calculated sqrtPriceX96 value
      */
-    function _calculateSqrtPriceX96(uint _ethAmount, uint _tokenAmount, bool _isEthToken0) internal pure returns (uint160 sqrtPriceX96_) {
+    function _calculateSqrtPriceX96(
+        uint _ethAmount,
+        uint _tokenAmount,
+        bool _isEthToken0
+    ) internal pure returns (uint160 sqrtPriceX96_) {
         require(_ethAmount > 0 && _tokenAmount > 0, 'Amounts must be greater than zero');
 
         // Calculate the price ratio depending on token order
@@ -185,8 +194,12 @@ contract MarketCappedPriceV3 is IInitialPrice, Ownable {
     /**
      * Helper function for square root.
      */
-    function _sqrt(uint _x) internal pure returns (uint result_) {
-        if (_x == 0) return 0;
+    function _sqrt(
+        uint _x
+    ) internal pure returns (uint result_) {
+        if (_x == 0) {
+            return 0;
+        }
         uint z = (_x + 1) / 2;
         result_ = _x;
         while (z < result_) {
@@ -203,5 +216,4 @@ contract MarketCappedPriceV3 is IInitialPrice, Ownable {
     function _guardInitializeOwner() internal pure virtual override returns (bool) {
         return true;
     }
-
 }

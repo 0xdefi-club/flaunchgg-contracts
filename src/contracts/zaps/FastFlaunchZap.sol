@@ -13,7 +13,6 @@ import {TokenSupply} from '@flaunch/libraries/TokenSupply.sol';
  * - 80% dev / 20% community split
  */
 contract FastFlaunchZap {
-
     /**
      * Parameters required when flaunching a new token.
      *
@@ -43,7 +42,9 @@ contract FastFlaunchZap {
      *
      * @param _positionManager Flaunch {PositionManager}
      */
-    constructor (PositionManager _positionManager) {
+    constructor(
+        PositionManager _positionManager
+    ) {
         positionManager = _positionManager;
     }
 
@@ -51,7 +52,9 @@ contract FastFlaunchZap {
      * Flaunches a token using a subset of the traditional flaunch parameters and filling the
      * rest with a standardised value.
      */
-    function flaunch(FastFlaunchParams calldata _params) external returns (address memecoin_) {
+    function flaunch(
+        FastFlaunchParams calldata _params
+    ) external returns (address memecoin_) {
         memecoin_ = positionManager.flaunch(
             PositionManager.FlaunchParams({
                 // Variable parameters
@@ -59,7 +62,6 @@ contract FastFlaunchZap {
                 symbol: _params.symbol,
                 tokenUri: _params.tokenUri,
                 creator: _params.creator,
-
                 // Fixed flaunch parameters
                 creatorFeeAllocation: 80_00,
                 initialTokenFairLaunch: FAIR_LAUNCH_SUPPLY,

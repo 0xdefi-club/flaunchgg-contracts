@@ -6,17 +6,15 @@ import {IERC20} from '@openzeppelin/contracts/token/ERC20/IERC20.sol';
 import {PoolId, PoolIdLibrary} from '@uniswap/v4-core/src/types/PoolId.sol';
 import {PoolKey} from '@uniswap/v4-core/src/types/PoolKey.sol';
 
-import {FlaunchZap} from '@flaunch/zaps/FlaunchZap.sol';
 import {PositionManager} from '@flaunch/PositionManager.sol';
+import {FlaunchZap} from '@flaunch/zaps/FlaunchZap.sol';
 
 import {FlaunchTest} from 'test/FlaunchTest.sol';
 
-
 contract FlaunchZapTest is FlaunchTest {
-
     using PoolIdLibrary for PoolKey;
 
-    constructor () {
+    constructor() {
         // Deploy our platform
         _deployPlatform();
 
@@ -91,19 +89,15 @@ contract FlaunchZapTest is FlaunchTest {
                 merkleRoot: _airdropMerkleRoot,
                 merkleIPFSHash: 'ipfs://'
             }),
-            _treasuryManagerParams: FlaunchZap.TreasuryManagerParams({
-                manager: _manager,
-                data: abi.encode('')
-            })
+            _treasuryManagerParams: FlaunchZap.TreasuryManagerParams({manager: _manager, data: abi.encode('')})
         });
 
         // Check our flaunch state
 
         // Check our whitelist
         {
-            (bytes32 root, string memory ipfs, uint maxTokens, bool active, bool exists) = whitelistFairLaunch.whitelistMerkles(
-                positionManager.poolKey(memecoin_).toId()
-            );
+            (bytes32 root, string memory ipfs, uint maxTokens, bool active, bool exists) =
+                whitelistFairLaunch.whitelistMerkles(positionManager.poolKey(memecoin_).toId());
 
             if (_whitelistMerkleRoot != '' && _initialTokenFairLaunch != 0) {
                 assertEq(root, _whitelistMerkleRoot);
@@ -178,5 +172,4 @@ contract FlaunchZapTest is FlaunchTest {
         ethRequired = flaunchZap.calculateFee(supplyShare(10_00), 0, abi.encode(''));
         assertEq(ethRequired, 0.2 ether + 0.002 ether + 0.001 ether);
     }
-
 }

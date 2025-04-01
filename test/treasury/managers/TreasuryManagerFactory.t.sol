@@ -7,12 +7,10 @@ import {TreasuryManagerFactory} from '@flaunch/treasury/managers/TreasuryManager
 
 import {ITreasuryManager} from '@flaunch-interfaces/ITreasuryManager.sol';
 
-import {TreasuryManagerMock} from 'test/mocks/TreasuryManagerMock.sol';
 import {FlaunchTest} from 'test/FlaunchTest.sol';
-
+import {TreasuryManagerMock} from 'test/mocks/TreasuryManagerMock.sol';
 
 contract TreasuryManagerFactoryTest is FlaunchTest {
-
     TreasuryManagerFactory factory;
 
     /// Define some EOA addresses to test with
@@ -150,5 +148,4 @@ contract TreasuryManagerFactoryTest is FlaunchTest {
 
         vm.stopPrank();
     }
-
 }

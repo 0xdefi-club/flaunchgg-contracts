@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.26;
 
-import {Currency} from '@uniswap/v4-core/src/types/Currency.sol';
 import {IHooks} from '@uniswap/v4-core/src/libraries/Hooks.sol';
+import {Currency} from '@uniswap/v4-core/src/types/Currency.sol';
 import {PoolId, PoolIdLibrary} from '@uniswap/v4-core/src/types/PoolId.sol';
 import {PoolKey} from '@uniswap/v4-core/src/types/PoolKey.sol';
 
@@ -11,9 +11,7 @@ import {MarketCappedPrice} from '@flaunch/price/MarketCappedPrice.sol';
 
 import {FlaunchTest} from '../FlaunchTest.sol';
 
-
 contract MarketCappedPriceTest is FlaunchTest {
-
     using PoolIdLibrary for PoolKey;
 
     address owner = address(this);
@@ -31,7 +29,8 @@ contract MarketCappedPriceTest is FlaunchTest {
         flaunchFeeExemption = new FlaunchFeeExemption();
 
         // Deploy the MarketCappedPrice contract
-        marketCappedPrice = new MarketCappedPrice(owner, address(poolManager), ETH_TOKEN, USDC_TOKEN, address(flaunchFeeExemption));
+        marketCappedPrice =
+            new MarketCappedPrice(owner, address(poolManager), ETH_TOKEN, USDC_TOKEN, address(flaunchFeeExemption));
 
         // Map our Base Sepolia ETH:USDC pool for any fork tests
         poolKey = PoolKey({
@@ -60,10 +59,7 @@ contract MarketCappedPriceTest is FlaunchTest {
 
     function test_CannotSetPoolWithInvalidTokenPair(address _token0, address _token1) public {
         // Ensure that at least one of the tokens does not match
-        vm.assume(
-            (_token0 != ETH_TOKEN && _token0 != USDC_TOKEN) ||
-            (_token1 != ETH_TOKEN && _token1 != USDC_TOKEN)
-        );
+        vm.assume((_token0 != ETH_TOKEN && _token0 != USDC_TOKEN) || (_token1 != ETH_TOKEN && _token1 != USDC_TOKEN));
 
         poolKey = PoolKey({
             currency0: Currency.wrap(_token0),
@@ -77,7 +73,9 @@ contract MarketCappedPriceTest is FlaunchTest {
         marketCappedPrice.setPool(poolKey);
     }
 
-    function test_CannotSetPoolIfNotOwner(address _notOwner) public {
+    function test_CannotSetPoolIfNotOwner(
+        address _notOwner
+    ) public {
         vm.assume(_notOwner != marketCappedPrice.owner());
 
         vm.prank(_notOwner);
@@ -88,7 +86,9 @@ contract MarketCappedPriceTest is FlaunchTest {
     function test_CanGetMarketCap() public forkBaseSepoliaBlock(17017447) {
         // As we have forked, we need to make a fresh deployment. We also need to reference
         // the Sepolia deployment of the {PoolManager}.
-        marketCappedPrice = new MarketCappedPrice(owner, 0x7Da1D65F8B249183667cdE74C5CBD46dD38AA829, ETH_TOKEN, USDC_TOKEN, address(flaunchFeeExemption));
+        marketCappedPrice = new MarketCappedPrice(
+            owner, 0x7Da1D65F8B249183667cdE74C5CBD46dD38AA829, ETH_TOKEN, USDC_TOKEN, address(flaunchFeeExemption)
+        );
 
         // Set our PoolId
         marketCappedPrice.setPool(poolKey);
@@ -110,7 +110,9 @@ contract MarketCappedPriceTest is FlaunchTest {
             hooks: IHooks(address(0))
         });
 
-        marketCappedPrice = new MarketCappedPrice(owner, 0x7Da1D65F8B249183667cdE74C5CBD46dD38AA829, ETH_TOKEN, USDC_TOKEN, address(flaunchFeeExemption));
+        marketCappedPrice = new MarketCappedPrice(
+            owner, 0x7Da1D65F8B249183667cdE74C5CBD46dD38AA829, ETH_TOKEN, USDC_TOKEN, address(flaunchFeeExemption)
+        );
 
         // Initial market cap
 
@@ -134,26 +136,28 @@ contract MarketCappedPriceTest is FlaunchTest {
     function test_CanGetPercentageBasedFlaunchingFee() public forkBaseSepoliaBlock(17017447) {
         // As we have forked, we need to make a fresh deployment. We also need to reference
         // the Sepolia deployment of the {PoolManager}.
-        marketCappedPrice = new MarketCappedPrice(owner, 0x7Da1D65F8B249183667cdE74C5CBD46dD38AA829, ETH_TOKEN, USDC_TOKEN, address(flaunchFeeExemption));
+        marketCappedPrice = new MarketCappedPrice(
+            owner, 0x7Da1D65F8B249183667cdE74C5CBD46dD38AA829, ETH_TOKEN, USDC_TOKEN, address(flaunchFeeExemption)
+        );
 
         // Set our PoolId
         marketCappedPrice.setPool(poolKey);
 
         // Our market cap should place the token at $5k~. This means that a 0.01% fee of this
         // should be around $5.
-        assertEq(
-            marketCappedPrice.getFlaunchingFee(address(this), abi.encode(5000e6)),
-            0.001923076923816568 ether
-        );
+        assertEq(marketCappedPrice.getFlaunchingFee(address(this), abi.encode(5000e6)), 0.001923076923816568 ether);
     }
 
-    function test_CannotGetMarketCapBelowThreshold(uint _marketCap) public {
+    function test_CannotGetMarketCapBelowThreshold(
+        uint _marketCap
+    ) public {
         vm.assume(_marketCap < marketCappedPrice.MINIMUM_USDC_MARKET_CAP());
 
-        vm.expectRevert(abi.encodeWithSelector(
-            MarketCappedPrice.MarketCapTooSmall.selector,
-            _marketCap, marketCappedPrice.MINIMUM_USDC_MARKET_CAP()
-        ));
+        vm.expectRevert(
+            abi.encodeWithSelector(
+                MarketCappedPrice.MarketCapTooSmall.selector, _marketCap, marketCappedPrice.MINIMUM_USDC_MARKET_CAP()
+            )
+        );
 
         marketCappedPrice.getSqrtPriceX96(address(this), false, abi.encode(_marketCap));
     }
@@ -166,7 +170,9 @@ contract MarketCappedPriceTest is FlaunchTest {
         flaunchFeeExemption = new FlaunchFeeExemption();
 
         // Set the pool to allow for flaunching fee calculation
-        marketCappedPrice = new MarketCappedPrice(owner, 0x7Da1D65F8B249183667cdE74C5CBD46dD38AA829, ETH_TOKEN, USDC_TOKEN, address(flaunchFeeExemption));
+        marketCappedPrice = new MarketCappedPrice(
+            owner, 0x7Da1D65F8B249183667cdE74C5CBD46dD38AA829, ETH_TOKEN, USDC_TOKEN, address(flaunchFeeExemption)
+        );
         marketCappedPrice.setPool(poolKey);
 
         // Set some constants for testing
@@ -187,5 +193,4 @@ contract MarketCappedPriceTest is FlaunchTest {
         // Confirm that the user now has a fee to pay
         assertEq(marketCappedPrice.getFlaunchingFee(_excluded, abi.encode(5000e6)), fee);
     }
-
 }

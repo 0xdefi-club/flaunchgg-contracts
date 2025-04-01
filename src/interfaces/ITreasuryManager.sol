@@ -3,13 +3,11 @@ pragma solidity ^0.8.26;
 
 import {Flaunch} from '@flaunch/Flaunch.sol';
 
-
 /**
  * Acts as a middleware for revenue claims, allowing external protocols to build on top of Flaunch
  * and be able to have more granular control over the revenue yielded.
  */
 interface ITreasuryManager {
-
     /**
      * ..
      */
@@ -33,5 +31,4 @@ interface ITreasuryManager {
      * @dev This is designed as a last-resort call, rather than an expected flow.
      */
     function rescue(FlaunchToken calldata _flaunchToken, address _recipient) external;
-
 }

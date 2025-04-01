@@ -7,8 +7,9 @@ import {PoolId} from '@uniswap/v4-core/src/types/PoolId.sol';
 import {PoolKey} from '@uniswap/v4-core/src/types/PoolKey.sol';
 
 import {Flaunch} from '@flaunch/Flaunch.sol';
-import {OnboardingManager} from '@flaunch/treasury/managers/OnboardingManager.sol';
+
 import {PositionManager} from '@flaunch/PositionManager.sol';
+import {OnboardingManager} from '@flaunch/treasury/managers/OnboardingManager.sol';
 import {SingleTokenManager} from '@flaunch/treasury/managers/SingleTokenManager.sol';
 import {TreasuryManager} from '@flaunch/treasury/managers/TreasuryManager.sol';
 
@@ -16,9 +17,7 @@ import {ITreasuryManager} from '@flaunch-interfaces/ITreasuryManager.sol';
 
 import {FlaunchTest} from 'test/FlaunchTest.sol';
 
-
 contract OnboardingManagerTest is FlaunchTest {
-
     /// Treasury management contracts
     OnboardingManager onboardingManager;
     address managerImplementation;
@@ -48,7 +47,11 @@ contract OnboardingManagerTest is FlaunchTest {
         flayPoolKey = positionManager.poolKey(flaunch.memecoin(flayTokenId));
 
         // Set up our {TreasuryManagerFactory} and approve our onboarding implementation
-        managerImplementation = address(new OnboardingManager(address(treasuryManagerFactory), payable(address(flayBurner)), address(snapshotAirdrop)));
+        managerImplementation = address(
+            new OnboardingManager(
+                address(treasuryManagerFactory), payable(address(flayBurner)), address(snapshotAirdrop)
+            )
+        );
         treasuryManagerFactory.approveManager(managerImplementation);
 
         // Approve the implementation to be an airdrop contract
@@ -65,14 +68,9 @@ contract OnboardingManagerTest is FlaunchTest {
 
         // Initialize a testing token
         onboardingManager.initialize({
-            _flaunchToken: ITreasuryManager.FlaunchToken({
-                flaunch: flaunch,
-                tokenId: tokenId
-            }),
+            _flaunchToken: ITreasuryManager.FlaunchToken({flaunch: flaunch, tokenId: tokenId}),
             _owner: owner,
-            _data: abi.encode(
-                OnboardingManager.InitializeParams(onboardee, onboardeeAllocation, claimWindowEnd)
-            )
+            _data: abi.encode(OnboardingManager.InitializeParams(onboardee, onboardeeAllocation, claimWindowEnd))
         });
 
         vm.stopPrank();
@@ -81,7 +79,6 @@ contract OnboardingManagerTest is FlaunchTest {
     /**
      * initialize
      */
-
     function test_CanInitialize(
         address payable _onboardee,
         uint _onboardeeAllocation,
@@ -113,10 +110,7 @@ contract OnboardingManagerTest is FlaunchTest {
 
         // Initialize a testing token
         onboardingManager.initialize({
-            _flaunchToken: ITreasuryManager.FlaunchToken({
-                flaunch: flaunch,
-                tokenId: newTokenId
-            }),
+            _flaunchToken: ITreasuryManager.FlaunchToken({flaunch: flaunch, tokenId: newTokenId}),
             _owner: owner,
             _data: abi.encode(params)
         });
@@ -134,7 +128,9 @@ contract OnboardingManagerTest is FlaunchTest {
         assertEq(address(onboardingManager.airdropClaim()), address(snapshotAirdrop));
     }
 
-    function test_CannotInitializeWithInvalidOnboardeeAllocation(uint _onboardeeAllocation) public freshManager {
+    function test_CannotInitializeWithInvalidOnboardeeAllocation(
+        uint _onboardeeAllocation
+    ) public freshManager {
         // Ensure our OnboardeeAllocation does not surpass a max value
         vm.assume(_onboardeeAllocation > 100_00);
 
@@ -155,10 +151,7 @@ contract OnboardingManagerTest is FlaunchTest {
         // Initialize a testing token
         vm.expectRevert(OnboardingManager.InvalidOnboardeeAllocation.selector);
         onboardingManager.initialize({
-            _flaunchToken: ITreasuryManager.FlaunchToken({
-                flaunch: flaunch,
-                tokenId: newTokenId
-            }),
+            _flaunchToken: ITreasuryManager.FlaunchToken({flaunch: flaunch, tokenId: newTokenId}),
             _owner: owner,
             _data: abi.encode(params)
         });
@@ -169,10 +162,7 @@ contract OnboardingManagerTest is FlaunchTest {
     function test_CannotInitializeWithUnownedToken() public freshManager {
         vm.expectRevert();
         onboardingManager.initialize({
-            _flaunchToken: ITreasuryManager.FlaunchToken({
-                flaunch: flaunch,
-                tokenId: 123
-            }),
+            _flaunchToken: ITreasuryManager.FlaunchToken({flaunch: flaunch, tokenId: 123}),
             _owner: address(this),
             _data: abi.encode(onboardee, onboardeeAllocation, claimWindowEnd)
         });
@@ -185,15 +175,13 @@ contract OnboardingManagerTest is FlaunchTest {
         // Deploy our {OnboardingManager} implementation and transfer our tokenId
         flaunch.approve(address(onboardingManager), newTokenId);
 
-        vm.expectRevert(abi.encodeWithSelector(
-            SingleTokenManager.TokenAlreadySet.selector,
-            ITreasuryManager.FlaunchToken(flaunch, tokenId)
-        ));
+        vm.expectRevert(
+            abi.encodeWithSelector(
+                SingleTokenManager.TokenAlreadySet.selector, ITreasuryManager.FlaunchToken(flaunch, tokenId)
+            )
+        );
         onboardingManager.initialize({
-            _flaunchToken: ITreasuryManager.FlaunchToken({
-                flaunch: flaunch,
-                tokenId: newTokenId
-            }),
+            _flaunchToken: ITreasuryManager.FlaunchToken({flaunch: flaunch, tokenId: newTokenId}),
             _owner: address(this),
             _data: abi.encode(onboardee, onboardeeAllocation, claimWindowEnd)
         });
@@ -202,8 +190,9 @@ contract OnboardingManagerTest is FlaunchTest {
     /**
      * claim
      */
-
-    function test_CanClaim(uint _claimTimestamp) public {
+    function test_CanClaim(
+        uint _claimTimestamp
+    ) public {
         // Ensure that our claim timestamp is within the window
         vm.assume(_claimTimestamp <= claimWindowEnd);
         vm.warp(_claimTimestamp);
@@ -228,7 +217,9 @@ contract OnboardingManagerTest is FlaunchTest {
         vm.stopPrank();
     }
 
-    function test_CanClaimWithZeroFees(uint _claimTimestamp) public {
+    function test_CanClaimWithZeroFees(
+        uint _claimTimestamp
+    ) public {
         // Ensure that our claim timestamp is within the window
         vm.assume(_claimTimestamp <= claimWindowEnd);
         vm.warp(_claimTimestamp);
@@ -250,7 +241,9 @@ contract OnboardingManagerTest is FlaunchTest {
         vm.stopPrank();
     }
 
-    function test_CanClaimWithZeroOnboardeeAllocation(uint _claimTimestamp) public freshManager {
+    function test_CanClaimWithZeroOnboardeeAllocation(
+        uint _claimTimestamp
+    ) public freshManager {
         // Ensure that our claim timestamp is within the window
         vm.assume(_claimTimestamp <= claimWindowEnd);
         vm.warp(_claimTimestamp);
@@ -261,14 +254,9 @@ contract OnboardingManagerTest is FlaunchTest {
 
         // Initialize a testing token
         onboardingManager.initialize({
-            _flaunchToken: ITreasuryManager.FlaunchToken({
-                flaunch: flaunch,
-                tokenId: newTokenId
-            }),
+            _flaunchToken: ITreasuryManager.FlaunchToken({flaunch: flaunch, tokenId: newTokenId}),
             _owner: owner,
-            _data: abi.encode(
-                OnboardingManager.InitializeParams(onboardee, 0, claimWindowEnd)
-            )
+            _data: abi.encode(OnboardingManager.InitializeParams(onboardee, 0, claimWindowEnd))
         });
 
         // Allocate 1e18 fees
@@ -291,7 +279,9 @@ contract OnboardingManagerTest is FlaunchTest {
         vm.stopPrank();
     }
 
-    function test_CannotClaimIfNotOnboardee(address _caller) public {
+    function test_CannotClaimIfNotOnboardee(
+        address _caller
+    ) public {
         // Ensure that our claim timestamp is within the window
         vm.assume(_caller != onboardee);
 
@@ -305,9 +295,11 @@ contract OnboardingManagerTest is FlaunchTest {
         onboardingManager.claim();
 
         vm.stopPrank();
-
     }
-    function test_CannotClaimIfWindowEnded(uint _claimTimestamp) public {
+
+    function test_CannotClaimIfWindowEnded(
+        uint _claimTimestamp
+    ) public {
         // Ensure that our claim timestamp is outside the window
         vm.assume(_claimTimestamp > claimWindowEnd);
         vm.warp(_claimTimestamp);
@@ -331,8 +323,9 @@ contract OnboardingManagerTest is FlaunchTest {
     /**
      * release
      */
-
-    function test_CanRelease(uint32 _claimTimestamp) public {
+    function test_CanRelease(
+        uint32 _claimTimestamp
+    ) public {
         // Ensure that our claim timestamp is outside the window
         vm.assume(_claimTimestamp > claimWindowEnd);
         vm.warp(_claimTimestamp);
@@ -360,7 +353,9 @@ contract OnboardingManagerTest is FlaunchTest {
         */
     }
 
-    function test_CanReleaseWithZeroBalance(uint _claimTimestamp) public {
+    function test_CanReleaseWithZeroBalance(
+        uint _claimTimestamp
+    ) public {
         // Ensure that our claim timestamp is outside the window
         vm.assume(_claimTimestamp > claimWindowEnd);
         vm.warp(_claimTimestamp);
@@ -378,7 +373,9 @@ contract OnboardingManagerTest is FlaunchTest {
         assertEq(payable(address(owner)).balance, 0);
     }
 
-    function test_CannotReleaseBeforeWindowEnded(uint _claimTimestamp) public {
+    function test_CannotReleaseBeforeWindowEnded(
+        uint _claimTimestamp
+    ) public {
         // Ensure that our claim timestamp is within the window
         vm.assume(_claimTimestamp <= claimWindowEnd);
 
@@ -393,12 +390,12 @@ contract OnboardingManagerTest is FlaunchTest {
         vm.stopPrank();
     }
 
-
     /**
      * setOnboardee
      */
-
-    function test_CanSetOnboardee(address payable _onboardee) public {
+    function test_CanSetOnboardee(
+        address payable _onboardee
+    ) public {
         // Ensure the protocol fee is within a valid range
         vm.assume(_onboardee != address(0));
 
@@ -421,7 +418,9 @@ contract OnboardingManagerTest is FlaunchTest {
         vm.stopPrank();
     }
 
-    function test_CannotSetOnboardeeIfNotOwner(address _caller) public {
+    function test_CannotSetOnboardeeIfNotOwner(
+        address _caller
+    ) public {
         // Ensure that the caller is not the owner
         vm.assume(_caller != owner);
 
@@ -437,15 +436,14 @@ contract OnboardingManagerTest is FlaunchTest {
         vm.startPrank(_caller);
 
         vm.expectRevert(OnboardingManager.CannotRescueToken.selector);
-        onboardingManager.rescue(
-            ITreasuryManager.FlaunchToken(flaunch, _tokenId),
-            _caller
-        );
+        onboardingManager.rescue(ITreasuryManager.FlaunchToken(flaunch, _tokenId), _caller);
 
         vm.stopPrank();
     }
 
-    function _createERC721(address _recipient) internal returns (uint tokenId_) {
+    function _createERC721(
+        address _recipient
+    ) internal returns (uint tokenId_) {
         // Flaunch another memecoin to mint a tokenId
         address memecoin = positionManager.flaunch(
             PositionManager.FlaunchParams({
@@ -466,7 +464,9 @@ contract OnboardingManagerTest is FlaunchTest {
         return flaunch.tokenId(memecoin);
     }
 
-    function _allocateFees(uint _amount) internal {
+    function _allocateFees(
+        uint _amount
+    ) internal {
         // Mint ETH to the flETH contract to facilitate unwrapping
         deal(address(this), _amount);
         WETH.deposit{value: _amount}();
@@ -479,11 +479,10 @@ contract OnboardingManagerTest is FlaunchTest {
     /**
      * Deploys a fresh {OnboardingManager} so that we the tokenId won't already be set.
      */
-    modifier freshManager {
+    modifier freshManager() {
         // Deploy a new {OnboardingManager} implementation as we will be using a new tokenId
         onboardingManager = OnboardingManager(treasuryManagerFactory.deployManager(managerImplementation));
 
         _;
     }
-
 }

@@ -4,18 +4,16 @@ pragma solidity ^0.8.26;
 import {IPoolManager} from '@uniswap/v4-core/src/interfaces/IPoolManager.sol';
 import {PoolId} from '@uniswap/v4-core/src/types/PoolId.sol';
 
-import {FeeDistributor} from '@flaunch/hooks/FeeDistributor.sol';
 import {ProtocolFeeRecipient} from '@flaunch/ProtocolFeeRecipient.sol';
+import {FeeDistributor} from '@flaunch/hooks/FeeDistributor.sol';
 
-import {PositionManagerMock} from './mocks/PositionManagerMock.sol';
 import {FlaunchTest} from './FlaunchTest.sol';
-
+import {PositionManagerMock} from './mocks/PositionManagerMock.sol';
 
 contract ProtocolFeeRecipientTest is FlaunchTest {
-
     ProtocolFeeRecipient protocolFeeRecipient;
 
-    constructor () {
+    constructor() {
         _deployPlatform();
 
         // Deploy our {ProtocolFeeRecipient}
@@ -93,14 +91,18 @@ contract ProtocolFeeRecipientTest is FlaunchTest {
         assertEq(payable(address(_recipient)).balance, sentAmount, 'Incorrect recipient ETH received');
     }
 
-    function test_CanAddPositionManager(address _positionManager) public {
+    function test_CanAddPositionManager(
+        address _positionManager
+    ) public {
         vm.expectEmit();
         emit ProtocolFeeRecipient.PositionManagerUpdated(_positionManager, true);
 
         protocolFeeRecipient.setPositionManager(_positionManager, true);
     }
 
-    function test_CanRemovePositionManager(address _positionManager) public {
+    function test_CanRemovePositionManager(
+        address _positionManager
+    ) public {
         protocolFeeRecipient.setPositionManager(_positionManager, true);
 
         vm.expectEmit();
@@ -109,29 +111,30 @@ contract ProtocolFeeRecipientTest is FlaunchTest {
         protocolFeeRecipient.setPositionManager(_positionManager, false);
     }
 
-    function _deployPositionManagerMock(address _deploymentAddress) internal returns (PositionManagerMock) {
-        FeeDistributor.FeeDistribution memory feeDistribution = FeeDistributor.FeeDistribution({
-            swapFee: 1_00,
-            referrer: 5_00,
-            protocol: 10_00,
-            active: true
-        });
+    function _deployPositionManagerMock(
+        address _deploymentAddress
+    ) internal returns (PositionManagerMock) {
+        FeeDistributor.FeeDistribution memory feeDistribution =
+            FeeDistributor.FeeDistribution({swapFee: 1_00, referrer: 5_00, protocol: 10_00, active: true});
 
-        deployCodeTo('PositionManagerMock.sol', abi.encode(
-            address(WETH),
-            address(poolManager),
-            feeDistribution,
-            address(initialPrice),
-            address(this),
-            address(this),
-            governance,
-            address(feeExemptions),
-            actionManager,
-            bidWall,
-            fairLaunch
-        ), _deploymentAddress);
+        deployCodeTo(
+            'PositionManagerMock.sol',
+            abi.encode(
+                address(WETH),
+                address(poolManager),
+                feeDistribution,
+                address(initialPrice),
+                address(this),
+                address(this),
+                governance,
+                address(feeExemptions),
+                actionManager,
+                bidWall,
+                fairLaunch
+            ),
+            _deploymentAddress
+        );
 
         return PositionManagerMock(payable(_deploymentAddress));
     }
-
 }

@@ -8,16 +8,15 @@ import {PositionManager} from '@flaunch/PositionManager.sol';
 import {ProtocolRoles} from '@flaunch/libraries/ProtocolRoles.sol';
 import {RevenueManager} from '@flaunch/treasury/managers/RevenueManager.sol';
 import {SingleTokenManager} from '@flaunch/treasury/managers/SingleTokenManager.sol';
-import {TreasuryManagerFactory} from '@flaunch/treasury/managers/TreasuryManagerFactory.sol';
+
 import {TreasuryManager} from '@flaunch/treasury/managers/TreasuryManager.sol';
+import {TreasuryManagerFactory} from '@flaunch/treasury/managers/TreasuryManagerFactory.sol';
 
 import {ITreasuryManager} from '@flaunch-interfaces/ITreasuryManager.sol';
 
 import {FlaunchTest} from 'test/FlaunchTest.sol';
 
-
 contract RevenueManagerTest is FlaunchTest {
-
     /// Set our treasury manager contracts
     RevenueManager revenueManager;
     TreasuryManagerFactory factory;
@@ -57,14 +56,9 @@ contract RevenueManagerTest is FlaunchTest {
 
         // Initialize a testing token
         revenueManager.initialize({
-            _flaunchToken: ITreasuryManager.FlaunchToken({
-                flaunch: flaunch,
-                tokenId: tokenId
-            }),
+            _flaunchToken: ITreasuryManager.FlaunchToken({flaunch: flaunch, tokenId: tokenId}),
             _owner: owner,
-            _data: abi.encode(
-                RevenueManager.InitializeParams(nonOwner, protocolRecipient, VALID_PROTOCOL_FEE)
-            )
+            _data: abi.encode(RevenueManager.InitializeParams(nonOwner, protocolRecipient, VALID_PROTOCOL_FEE))
         });
         vm.stopPrank();
     }
@@ -73,7 +67,11 @@ contract RevenueManagerTest is FlaunchTest {
      * We need to be able to initialize our {RevenueManager} with a range of parameters
      * and ensure that they are set in the contract correctly.
      */
-    function test_CanInitialize(address payable _creator, address payable _protocolRecipient, uint _protocolFee) public freshManager {
+    function test_CanInitialize(
+        address payable _creator,
+        address payable _protocolRecipient,
+        uint _protocolFee
+    ) public freshManager {
         vm.assume(_protocolFee <= 100_00);
         vm.assume(_creator != address(0));
 
@@ -84,19 +82,15 @@ contract RevenueManagerTest is FlaunchTest {
         flaunch.approve(address(revenueManager), newTokenId);
 
         // Define our initialization parameters
-        RevenueManager.InitializeParams memory params = RevenueManager.InitializeParams(
-            _creator, _protocolRecipient, _protocolFee
-        );
+        RevenueManager.InitializeParams memory params =
+            RevenueManager.InitializeParams(_creator, _protocolRecipient, _protocolFee);
 
         vm.expectEmit();
         emit TreasuryManager.TreasuryEscrowed(address(flaunch), newTokenId, address(this), address(this));
         emit RevenueManager.ManagerInitialized(address(flaunch), newTokenId, params);
 
         revenueManager.initialize({
-            _flaunchToken: ITreasuryManager.FlaunchToken({
-                flaunch: flaunch,
-                tokenId: newTokenId
-            }),
+            _flaunchToken: ITreasuryManager.FlaunchToken({flaunch: flaunch, tokenId: newTokenId}),
             _owner: address(this),
             _data: abi.encode(params)
         });
@@ -120,14 +114,9 @@ contract RevenueManagerTest is FlaunchTest {
     function test_CannotInitializeWithUnownedToken() public freshManager {
         vm.expectRevert();
         revenueManager.initialize({
-            _flaunchToken: ITreasuryManager.FlaunchToken({
-                flaunch: flaunch,
-                tokenId: 123
-            }),
+            _flaunchToken: ITreasuryManager.FlaunchToken({flaunch: flaunch, tokenId: 123}),
             _owner: owner,
-            _data: abi.encode(
-                RevenueManager.InitializeParams(nonOwner, protocolRecipient, VALID_PROTOCOL_FEE)
-            )
+            _data: abi.encode(RevenueManager.InitializeParams(nonOwner, protocolRecipient, VALID_PROTOCOL_FEE))
         });
     }
 
@@ -142,15 +131,13 @@ contract RevenueManagerTest is FlaunchTest {
         // Deploy our {RevenueManager} implementation and transfer our tokenId
         flaunch.approve(address(revenueManager), newTokenId);
 
-        vm.expectRevert(abi.encodeWithSelector(
-            SingleTokenManager.TokenAlreadySet.selector,
-            ITreasuryManager.FlaunchToken(flaunch, tokenId))
+        vm.expectRevert(
+            abi.encodeWithSelector(
+                SingleTokenManager.TokenAlreadySet.selector, ITreasuryManager.FlaunchToken(flaunch, tokenId)
+            )
         );
         revenueManager.initialize({
-            _flaunchToken: ITreasuryManager.FlaunchToken({
-                flaunch: flaunch,
-                tokenId: newTokenId
-            }),
+            _flaunchToken: ITreasuryManager.FlaunchToken({flaunch: flaunch, tokenId: newTokenId}),
             _owner: address(this),
             _data: abi.encode(
                 RevenueManager.InitializeParams(payable(address(this)), protocolRecipient, VALID_PROTOCOL_FEE)
@@ -162,7 +149,10 @@ contract RevenueManagerTest is FlaunchTest {
      * We don't allow the creator to be a zero address, so we need to ensure
      * that a call with a zero address will revert.
      */
-    function test_CannotInitializeWithInvalidCreator(address payable _protocolRecipient, uint _protocolFee) public freshManager {
+    function test_CannotInitializeWithInvalidCreator(
+        address payable _protocolRecipient,
+        uint _protocolFee
+    ) public freshManager {
         vm.assume(_protocolFee <= 100_00);
 
         // Flaunch another memecoin to mint a tokenId
@@ -173,14 +163,9 @@ contract RevenueManagerTest is FlaunchTest {
 
         vm.expectRevert(RevenueManager.InvalidCreatorAddress.selector);
         revenueManager.initialize({
-            _flaunchToken: ITreasuryManager.FlaunchToken({
-                flaunch: flaunch,
-                tokenId: newTokenId
-            }),
+            _flaunchToken: ITreasuryManager.FlaunchToken({flaunch: flaunch, tokenId: newTokenId}),
             _owner: address(this),
-            _data: abi.encode(
-                RevenueManager.InitializeParams(payable(address(0)), _protocolRecipient, _protocolFee)
-            )
+            _data: abi.encode(RevenueManager.InitializeParams(payable(address(0)), _protocolRecipient, _protocolFee))
         });
     }
 
@@ -188,7 +173,9 @@ contract RevenueManagerTest is FlaunchTest {
      * A protocol fee must be a value between 0 and 100_00 to be valid,
      * so we need to ensure that other values aren't accepted.
      */
-    function test_CannotInitializeWithInvalidProtocolFee(uint _protocolFee) public freshManager {
+    function test_CannotInitializeWithInvalidProtocolFee(
+        uint _protocolFee
+    ) public freshManager {
         // Assume an invalid protocol fee
         vm.assume(_protocolFee > 100_00);
 
@@ -200,14 +187,9 @@ contract RevenueManagerTest is FlaunchTest {
 
         vm.expectRevert(RevenueManager.InvalidProtocolFee.selector);
         revenueManager.initialize({
-            _flaunchToken: ITreasuryManager.FlaunchToken({
-                flaunch: flaunch,
-                tokenId: newTokenId
-            }),
+            _flaunchToken: ITreasuryManager.FlaunchToken({flaunch: flaunch, tokenId: newTokenId}),
             _owner: address(this),
-            _data: abi.encode(
-                RevenueManager.InitializeParams(payable(address(this)), protocolRecipient, _protocolFee)
-            )
+            _data: abi.encode(RevenueManager.InitializeParams(payable(address(this)), protocolRecipient, _protocolFee))
         });
     }
 
@@ -221,8 +203,7 @@ contract RevenueManagerTest is FlaunchTest {
          * Protocol fee:       0%
          * Protocol recipient: true
          */
-
-         _assertClaimAmounts({
+        _assertClaimAmounts({
             protocolFee: 0,
             protocolRecipientSet: true,
             claimAmount: 1 ether,
@@ -234,8 +215,7 @@ contract RevenueManagerTest is FlaunchTest {
          * Protocol fee:       100%
          * Protocol recipient: true
          */
-
-         _assertClaimAmounts({
+        _assertClaimAmounts({
             protocolFee: 100_00,
             protocolRecipientSet: true,
             claimAmount: 1 ether,
@@ -247,8 +227,7 @@ contract RevenueManagerTest is FlaunchTest {
          * Protocol fee:       50%
          * Protocol recipient: true
          */
-
-         _assertClaimAmounts({
+        _assertClaimAmounts({
             protocolFee: 50_00,
             protocolRecipientSet: true,
             claimAmount: 1 ether,
@@ -260,8 +239,7 @@ contract RevenueManagerTest is FlaunchTest {
          * Protocol fee:       50%
          * Protocol recipient: false
          */
-
-         _assertClaimAmounts({
+        _assertClaimAmounts({
             protocolFee: 50_00,
             protocolRecipientSet: false,
             claimAmount: 1 ether,
@@ -275,8 +253,7 @@ contract RevenueManagerTest is FlaunchTest {
          *
          * @dev If the value is indivisible, then the creator benefits.
          */
-
-         _assertClaimAmounts({
+        _assertClaimAmounts({
             protocolFee: 50_00,
             protocolRecipientSet: true,
             claimAmount: 3,
@@ -330,7 +307,9 @@ contract RevenueManagerTest is FlaunchTest {
      * recipient. This test ensures that the correct events are fired and that
      * the updated address is reflected on the contract.
      */
-    function test_CanSetProtocolRecipient(address payable _protocolRecipient) public {
+    function test_CanSetProtocolRecipient(
+        address payable _protocolRecipient
+    ) public {
         // We only expect an event if the protocol recipient is not a zero address
         if (_protocolRecipient != address(0)) {
             vm.expectEmit();
@@ -352,7 +331,9 @@ contract RevenueManagerTest is FlaunchTest {
      * defined during the call) and any other address that is not the defined
      * `owner`.
      */
-    function test_CannotSetProtocolRecipientIfNotOwner(address _caller) public {
+    function test_CannotSetProtocolRecipientIfNotOwner(
+        address _caller
+    ) public {
         // Ensure that the caller is not the owner
         vm.assume(_caller != owner);
 
@@ -368,7 +349,9 @@ contract RevenueManagerTest is FlaunchTest {
      * The `owner` should be able to set the protocol fee. This value must
      * fall within a valid value range.
      */
-    function test_CanSetProtocolFee(uint _protocolFee) public {
+    function test_CanSetProtocolFee(
+        uint _protocolFee
+    ) public {
         // Ensure the protocol fee is within a valid range
         vm.assume(_protocolFee <= 100_00);
 
@@ -386,7 +369,9 @@ contract RevenueManagerTest is FlaunchTest {
     /**
      * If a protocol fee over 100% is set, then the call should revert.
      */
-    function test_CannotSetInvalidProtocolFee(uint _protocolFee) public {
+    function test_CannotSetInvalidProtocolFee(
+        uint _protocolFee
+    ) public {
         // Ensure that the protocol fee is invalid
         vm.assume(_protocolFee > 100_00);
 
@@ -403,7 +388,9 @@ contract RevenueManagerTest is FlaunchTest {
      * defined during the call) and any other address that is not the defined
      * `owner`.
      */
-    function test_CannotSetProtocolFeeIfNotOwner(address _caller) public {
+    function test_CannotSetProtocolFeeIfNotOwner(
+        address _caller
+    ) public {
         // Ensure that the caller is not the owner
         vm.assume(_caller != owner);
 
@@ -418,7 +405,9 @@ contract RevenueManagerTest is FlaunchTest {
     /**
      * The `owner` should be able to set the creator. This cannot be a zero address.
      */
-    function test_CanSetCreator(address payable _creator) public {
+    function test_CanSetCreator(
+        address payable _creator
+    ) public {
         // Ensure the creator address is not a zero address
         vm.assume(_creator != address(0));
 
@@ -450,7 +439,9 @@ contract RevenueManagerTest is FlaunchTest {
      * defined during the call) and any other address that is not the defined
      * `owner`.
      */
-    function test_CannotSetCreatorIfNotOwner(address payable _caller) public {
+    function test_CannotSetCreatorIfNotOwner(
+        address payable _caller
+    ) public {
         // Ensure that the caller is not the owner
         vm.assume(_caller != owner);
 
@@ -468,7 +459,9 @@ contract RevenueManagerTest is FlaunchTest {
      * correctly transferred to the owner, which can then be routed however the
      * external protocol desires.
      */
-    function test_CanRescueERC721(address _recipient) public {
+    function test_CanRescueERC721(
+        address _recipient
+    ) public {
         // Transferring to zero address would raise errors
         vm.assume(_recipient != address(0));
 
@@ -480,10 +473,7 @@ contract RevenueManagerTest is FlaunchTest {
         emit TreasuryManager.TreasuryReclaimed(address(flaunch), tokenId, owner, _recipient);
 
         vm.prank(owner);
-        revenueManager.rescue(
-            ITreasuryManager.FlaunchToken(flaunch, tokenId),
-            _recipient
-        );
+        revenueManager.rescue(ITreasuryManager.FlaunchToken(flaunch, tokenId), _recipient);
 
         // Confirm the recipient is now the owner
         assertEq(flaunch.ownerOf(tokenId), _recipient);
@@ -497,10 +487,7 @@ contract RevenueManagerTest is FlaunchTest {
         vm.startPrank(owner);
 
         vm.expectRevert();
-        revenueManager.rescue(
-            ITreasuryManager.FlaunchToken(flaunch, 123),
-            owner
-        );
+        revenueManager.rescue(ITreasuryManager.FlaunchToken(flaunch, 123), owner);
 
         vm.stopPrank();
     }
@@ -509,17 +496,16 @@ contract RevenueManagerTest is FlaunchTest {
      * If anyone other than the owner tries to rescue a stored ERC721 then we
      * need to revert as only the owner should have permission to do this.
      */
-    function test_CannotRescueERC721IfNotOwner(address _caller) public {
+    function test_CannotRescueERC721IfNotOwner(
+        address _caller
+    ) public {
         // Ensure that the caller is not the owner
         vm.assume(_caller != owner);
 
         vm.startPrank(_caller);
 
         vm.expectRevert(TreasuryManager.NotManagerOwner.selector);
-        revenueManager.rescue(
-            ITreasuryManager.FlaunchToken(flaunch, tokenId),
-            _caller
-        );
+        revenueManager.rescue(ITreasuryManager.FlaunchToken(flaunch, tokenId), _caller);
 
         vm.stopPrank();
     }
@@ -531,21 +517,16 @@ contract RevenueManagerTest is FlaunchTest {
      */
     function test_CannotAddNewERC721AfterRescue() public {
         vm.prank(owner);
-        revenueManager.rescue(
-            ITreasuryManager.FlaunchToken(flaunch, tokenId),
-            address(this)
-        );
+        revenueManager.rescue(ITreasuryManager.FlaunchToken(flaunch, tokenId), address(this));
 
         flaunch.approve(address(revenueManager), tokenId);
-        vm.expectRevert(abi.encodeWithSelector(
-            SingleTokenManager.TokenAlreadySet.selector,
-            ITreasuryManager.FlaunchToken(flaunch, tokenId)
-        ));
+        vm.expectRevert(
+            abi.encodeWithSelector(
+                SingleTokenManager.TokenAlreadySet.selector, ITreasuryManager.FlaunchToken(flaunch, tokenId)
+            )
+        );
         revenueManager.initialize({
-            _flaunchToken: ITreasuryManager.FlaunchToken({
-                flaunch: flaunch,
-                tokenId: tokenId
-            }),
+            _flaunchToken: ITreasuryManager.FlaunchToken({flaunch: flaunch, tokenId: tokenId}),
             _owner: address(this),
             _data: abi.encode(
                 RevenueManager.InitializeParams(payable(address(this)), protocolRecipient, VALID_PROTOCOL_FEE)
@@ -553,7 +534,9 @@ contract RevenueManagerTest is FlaunchTest {
         });
     }
 
-    function _createERC721(address _recipient) internal returns (uint tokenId_) {
+    function _createERC721(
+        address _recipient
+    ) internal returns (uint tokenId_) {
         // Flaunch another memecoin to mint a tokenId
         address memecoin = positionManager.flaunch(
             PositionManager.FlaunchParams({
@@ -636,11 +619,10 @@ contract RevenueManagerTest is FlaunchTest {
     /**
      * Deploys a fresh {RevenueManager} so that we the tokenId won't already be set.
      */
-    modifier freshManager {
+    modifier freshManager() {
         // Deploy a new {RevenueManager} implementation as we will be using a new tokenId
         revenueManager = RevenueManager(factory.deployManager(managerImplementation));
 
         _;
     }
-
 }

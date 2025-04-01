@@ -7,13 +7,11 @@ import {TreasuryManagerFactory} from '@flaunch/treasury/managers/TreasuryManager
 
 import {ITreasuryManager} from '@flaunch-interfaces/ITreasuryManager.sol';
 
-
 /**
  * Acts as a middleware for revenue claims, allowing external protocols to build on top of Flaunch
  * and be able to have more granular control over the revenue yielded.
  */
 abstract contract TreasuryManager is ITreasuryManager {
-
     error FlaunchContractNotValid();
     error NotManagerOwner();
     error TokenTimelocked(uint _unlockedAt);
@@ -30,14 +28,16 @@ abstract contract TreasuryManager is ITreasuryManager {
     address public managerOwner;
 
     /// Creates a standardised timelock mechanism for tokens
-    mapping (address _flaunch => mapping (uint _tokenId => uint _unlockedAt)) public tokenTimelock;
+    mapping(address _flaunch => mapping(uint _tokenId => uint _unlockedAt)) public tokenTimelock;
 
     /**
      * Sets up the contract with the initial required contract addresses.
      *
      * @param _treasuryManagerFactory The {TreasuryManagerFactory} that will launch this implementation
      */
-    constructor (address _treasuryManagerFactory) {
+    constructor(
+        address _treasuryManagerFactory
+    ) {
         treasuryManagerFactory = TreasuryManagerFactory(_treasuryManagerFactory);
     }
 
@@ -115,7 +115,9 @@ abstract contract TreasuryManager is ITreasuryManager {
      *
      * @param _newManagerOwner The new address that will become the owner
      */
-    function transferOwnership(address _newManagerOwner) public onlyManagerOwner {
+    function transferOwnership(
+        address _newManagerOwner
+    ) public onlyManagerOwner {
         emit ManagerOwnershipTransferred(managerOwner, _newManagerOwner);
         managerOwner = _newManagerOwner;
     }
@@ -123,14 +125,16 @@ abstract contract TreasuryManager is ITreasuryManager {
     /**
      * Checks if the specified address is a valid Flaunch contract.
      */
-    function _isValidFlaunchContract(address _flaunch) internal view returns (bool) {
+    function _isValidFlaunchContract(
+        address _flaunch
+    ) internal view returns (bool) {
         return treasuryManagerFactory.hasRole(ProtocolRoles.FLAUNCH, _flaunch);
     }
 
     /**
      * Allows for protected calls that only the manager owner can make.
      */
-    modifier onlyManagerOwner {
+    modifier onlyManagerOwner() {
         if (msg.sender != managerOwner) {
             revert NotManagerOwner();
         }
@@ -141,6 +145,5 @@ abstract contract TreasuryManager is ITreasuryManager {
     /**
      * Allows the contract to receive ETH when withdrawn from the flETH token.
      */
-    receive () external payable {}
-
+    receive() external payable {}
 }

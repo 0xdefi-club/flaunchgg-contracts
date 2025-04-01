@@ -6,13 +6,11 @@ import {FullMath} from '@uniswap/v4-core/src/libraries/FullMath.sol';
 import {Flaunch} from '@flaunch/Flaunch.sol';
 import {SingleTokenManager} from '@flaunch/treasury/managers/SingleTokenManager.sol';
 
-
 /**
  * Allows a token to be escrowed to allow multiple recipients to receive a share of the
  * revenue earned from the token. This can allow for complex revenue distributions.
  */
 contract RevenueSplitManager is SingleTokenManager {
-
     error InvalidRecipient();
     error InvalidRecipientShareTotal(uint _invalidTotal, uint _expectedValue);
     error UnableToSendRevenue(bytes _reason);
@@ -47,17 +45,19 @@ contract RevenueSplitManager is SingleTokenManager {
     uint public totalClaimed;
 
     /// Track the amount claimed for each recipient
-    mapping (address _recipient => uint _claimed) public amountClaimed;
+    mapping(address _recipient => uint _claimed) public amountClaimed;
 
     /// Stores the share initialized for each recipient
-    mapping (address _recipient => uint _share) public recipientShares;
+    mapping(address _recipient => uint _share) public recipientShares;
 
     /**
      * Sets up the contract with the initial required contract addresses.
      *
      * @param _treasuryManagerFactory The {TreasuryManagerFactory} that will launch this implementation
      */
-    constructor (address _treasuryManagerFactory) SingleTokenManager(_treasuryManagerFactory) {
+    constructor(
+        address _treasuryManagerFactory
+    ) SingleTokenManager(_treasuryManagerFactory) {
         // ..
     }
 
@@ -69,7 +69,10 @@ contract RevenueSplitManager is SingleTokenManager {
      * @param _flaunchToken The Flaunch token that is being deposited
      * @param _data Onboarding variables
      */
-    function _initialize(FlaunchToken calldata _flaunchToken, bytes calldata _data) internal override depositSingleToken(_flaunchToken) {
+    function _initialize(
+        FlaunchToken calldata _flaunchToken,
+        bytes calldata _data
+    ) internal override depositSingleToken(_flaunchToken) {
         // Unpack our initial manager settings
         (InitializeParams memory params) = abi.decode(_data, (InitializeParams));
 
@@ -111,7 +114,9 @@ contract RevenueSplitManager is SingleTokenManager {
     function claim() public tokenExists {
         // Ensure that only a valid recipient can call this
         uint recipientShare = recipientShares[msg.sender];
-        if (recipientShare == 0) revert InvalidRecipient();
+        if (recipientShare == 0) {
+            revert InvalidRecipient();
+        }
 
         // Find the balance held in the manager before claiming fees
         uint startBalance = payable(address(this)).balance;
@@ -133,7 +138,7 @@ contract RevenueSplitManager is SingleTokenManager {
 
         // If the user has no allocation available, then we can exit early
         if (allocation == 0) {
-            return ;
+            return;
         }
 
         // Increase the amount that the caller has claimed
@@ -147,5 +152,4 @@ contract RevenueSplitManager is SingleTokenManager {
 
         emit RevenueClaimed(msg.sender, allocation, amountClaimed[msg.sender]);
     }
-
 }

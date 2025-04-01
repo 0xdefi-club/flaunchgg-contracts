@@ -3,17 +3,15 @@ pragma solidity ^0.8.26;
 
 import {PoolKey} from '@uniswap/v4-core/src/types/PoolKey.sol';
 
-import {OnboardingManager} from '@flaunch/treasury/managers/OnboardingManager.sol';
 import {PositionManager} from '@flaunch/PositionManager.sol';
+import {OnboardingManager} from '@flaunch/treasury/managers/OnboardingManager.sol';
 import {RaidManager} from '@flaunch/treasury/managers/RaidManager.sol';
 
 import {ITreasuryManager} from '@flaunch-interfaces/ITreasuryManager.sol';
 
 import {FlaunchTest} from 'test/FlaunchTest.sol';
 
-
 contract RaidManagerTest is FlaunchTest {
-
     // Define some test users
     address payable public user0 = payable(address(1112));
     address payable public user1 = payable(address(1113));
@@ -42,7 +40,9 @@ contract RaidManagerTest is FlaunchTest {
         flayPoolKey = positionManager.poolKey(flaunch.memecoin(flayTokenId));
 
         // Set up our {TreasuryManagerFactory} and approve our raiding implementation
-        managerImplementation = address(new RaidManager(address(treasuryManagerFactory), payable(address(flayBurner)), address(snapshotAirdrop)));
+        managerImplementation = address(
+            new RaidManager(address(treasuryManagerFactory), payable(address(flayBurner)), address(snapshotAirdrop))
+        );
         treasuryManagerFactory.approveManager(managerImplementation);
 
         // Deploy our {OnboardingManager} implementation
@@ -60,10 +60,7 @@ contract RaidManagerTest is FlaunchTest {
         // Initialize a testing token
         vm.startPrank(user1);
         raidManager.initialize({
-            _flaunchToken: ITreasuryManager.FlaunchToken({
-                flaunch: flaunch,
-                tokenId: token2
-            }),
+            _flaunchToken: ITreasuryManager.FlaunchToken({flaunch: flaunch, tokenId: token2}),
             _owner: address(this),
             _data: abi.encode(
                 OnboardingManager.InitializeParams({
@@ -87,7 +84,9 @@ contract RaidManagerTest is FlaunchTest {
         assertEq(raidManager.raiders(address(flaunch), token0), user0);
     }
 
-    function test_CannotJoinRaidAfterWindowEnd(uint _delay) public {
+    function test_CannotJoinRaidAfterWindowEnd(
+        uint _delay
+    ) public {
         vm.assume(_delay > raidManager.claimWindowEnd());
         vm.warp(_delay);
 
@@ -147,7 +146,9 @@ contract RaidManagerTest is FlaunchTest {
         raidManager.exitRaid(ITreasuryManager.FlaunchToken(flaunch, token0));
     }
 
-    function _createERC721(address _recipient) internal returns (uint tokenId_) {
+    function _createERC721(
+        address _recipient
+    ) internal returns (uint tokenId_) {
         // Flaunch another memecoin to mint a tokenId
         address memecoin = positionManager.flaunch(
             PositionManager.FlaunchParams({
@@ -167,5 +168,4 @@ contract RaidManagerTest is FlaunchTest {
         // Get the tokenId from the memecoin address
         return flaunch.tokenId(memecoin);
     }
-
 }

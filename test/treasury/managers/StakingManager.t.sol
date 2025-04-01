@@ -1,14 +1,15 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.26;
 
-import {ERC20Mock} from "test/mocks/ERC20Mock.sol";
 import {PoolId} from '@uniswap/v4-core/src/types/PoolId.sol';
+import {ERC20Mock} from 'test/mocks/ERC20Mock.sol';
 
 import {Flaunch} from '@flaunch/Flaunch.sol';
 import {PositionManager} from '@flaunch/PositionManager.sol';
-import {TreasuryManager} from '@flaunch/treasury/managers/TreasuryManager.sol';
-import {StakingManager} from '@flaunch/treasury/managers/StakingManager.sol';
+
 import {SingleTokenManager} from '@flaunch/treasury/managers/SingleTokenManager.sol';
+import {StakingManager} from '@flaunch/treasury/managers/StakingManager.sol';
+import {TreasuryManager} from '@flaunch/treasury/managers/TreasuryManager.sol';
 
 import {ITreasuryManager} from '@flaunch-interfaces/ITreasuryManager.sol';
 
@@ -53,27 +54,23 @@ contract StakingManagerTest is FlaunchTest {
         flaunch.approve(address(stakingManager), tokenId);
 
         // Deploy a Token to stake for testing
-        stakingToken = new ERC20Mock("Meme", "MEME");
+        stakingToken = new ERC20Mock('Meme', 'MEME');
 
         // Initialize a testing token
         stakingManager.initialize({
-            _flaunchToken: ITreasuryManager.FlaunchToken({
-                flaunch: flaunch,
-                tokenId: tokenId
-            }),
+            _flaunchToken: ITreasuryManager.FlaunchToken({flaunch: flaunch, tokenId: tokenId}),
             _owner: owner,
             _data: abi.encode(
                 StakingManager.InitializeParams(address(stakingToken), minEscrowDuration, minStakeDuration, creatorSplit)
             )
         });
-        
+
         vm.stopPrank();
     }
 
     /**
      * initialize
      */
-
     function test_CanInitializeSuccessfully(
         address _stakingToken,
         uint _minEscrowDuration,
@@ -103,10 +100,7 @@ contract StakingManagerTest is FlaunchTest {
 
         // Initialize a testing token
         stakingManager.initialize({
-            _flaunchToken: ITreasuryManager.FlaunchToken({
-                flaunch: flaunch,
-                tokenId: newTokenId
-            }),
+            _flaunchToken: ITreasuryManager.FlaunchToken({flaunch: flaunch, tokenId: newTokenId}),
             _owner: owner,
             _data: abi.encode(params)
         });
@@ -125,7 +119,9 @@ contract StakingManagerTest is FlaunchTest {
         assertEq(stakingManager.isStakingActive(), true);
     }
 
-    function test_CannotInitializeWithInvalidCreatorSplit(uint _creatorSplit) public freshManager {
+    function test_CannotInitializeWithInvalidCreatorSplit(
+        uint _creatorSplit
+    ) public freshManager {
         // Ensure that the creator split is invalid
         vm.assume(_creatorSplit > MAX_CREATOR_SPLIT);
 
@@ -136,12 +132,11 @@ contract StakingManagerTest is FlaunchTest {
 
         vm.expectRevert(StakingManager.InvalidCreatorSplit.selector);
         stakingManager.initialize({
-            _flaunchToken: ITreasuryManager.FlaunchToken({
-                flaunch: flaunch,
-                tokenId: newTokenId
-            }),
+            _flaunchToken: ITreasuryManager.FlaunchToken({flaunch: flaunch, tokenId: newTokenId}),
             _owner: owner,
-            _data: abi.encode(StakingManager.InitializeParams(address(stakingToken), minEscrowDuration, minStakeDuration, _creatorSplit))
+            _data: abi.encode(
+                StakingManager.InitializeParams(address(stakingToken), minEscrowDuration, minStakeDuration, _creatorSplit)
+            )
         });
 
         vm.stopPrank();
@@ -150,12 +145,11 @@ contract StakingManagerTest is FlaunchTest {
     function test_CannotInitializeWithUnownedToken() public freshManager {
         vm.expectRevert();
         stakingManager.initialize({
-            _flaunchToken: ITreasuryManager.FlaunchToken({
-                flaunch: flaunch,
-                tokenId: 123
-            }),
+            _flaunchToken: ITreasuryManager.FlaunchToken({flaunch: flaunch, tokenId: 123}),
             _owner: owner,
-            _data: abi.encode(StakingManager.InitializeParams(address(stakingToken), minEscrowDuration, minStakeDuration, creatorSplit))
+            _data: abi.encode(
+                StakingManager.InitializeParams(address(stakingToken), minEscrowDuration, minStakeDuration, creatorSplit)
+            )
         });
     }
 
@@ -166,29 +160,28 @@ contract StakingManagerTest is FlaunchTest {
         // Deploy our {StakingManager} implementation and transfer our tokenId
         flaunch.approve(address(stakingManager), newTokenId);
 
-        vm.expectRevert(abi.encodeWithSelector(
-            SingleTokenManager.TokenAlreadySet.selector,
-            ITreasuryManager.FlaunchToken(flaunch, tokenId)
-        ));
+        vm.expectRevert(
+            abi.encodeWithSelector(
+                SingleTokenManager.TokenAlreadySet.selector, ITreasuryManager.FlaunchToken(flaunch, tokenId)
+            )
+        );
         stakingManager.initialize({
-            _flaunchToken: ITreasuryManager.FlaunchToken({
-                flaunch: flaunch,
-                tokenId: newTokenId
-            }),
+            _flaunchToken: ITreasuryManager.FlaunchToken({flaunch: flaunch, tokenId: newTokenId}),
             _owner: owner,
-            _data: abi.encode(StakingManager.InitializeParams(address(stakingToken), minEscrowDuration, minStakeDuration, creatorSplit))
+            _data: abi.encode(
+                StakingManager.InitializeParams(address(stakingToken), minEscrowDuration, minStakeDuration, creatorSplit)
+            )
         });
     }
 
     /**
      * escrowWithdraw
      */
-
     function test_CanEscrowWithdrawSuccessfully() public {
         vm.warp(stakingManager.escrowLockedUntil() + 1);
 
         vm.startPrank(owner);
-        
+
         vm.expectEmit();
         emit StakingManager.EscrowWithdrawal(tokenId, owner);
         stakingManager.escrowWithdraw();
@@ -201,9 +194,9 @@ contract StakingManagerTest is FlaunchTest {
 
     function test_CannotEscrowWithdrawIfNotOwner() public {
         vm.warp(stakingManager.escrowLockedUntil() + 1);
-        
+
         vm.startPrank(nonOwner);
-        
+
         vm.expectRevert(TreasuryManager.NotManagerOwner.selector);
         stakingManager.escrowWithdraw();
 
@@ -231,7 +224,6 @@ contract StakingManagerTest is FlaunchTest {
     /**
      * creatorClaim
      */
-
     function test_CanCreatorClaimSuccessfully() public {
         _allocateFees(10 ether);
         // trigger withdraw fees
@@ -250,18 +242,17 @@ contract StakingManagerTest is FlaunchTest {
 
         vm.stopPrank();
     }
-    
+
     function test_CannotCreatorClaimIfNotOwner() public {
         vm.startPrank(nonOwner);
         vm.expectRevert(TreasuryManager.NotManagerOwner.selector);
         stakingManager.creatorClaim();
         vm.stopPrank();
     }
-    
+
     /**
      * extendEscrowDuration
      */
-
     function test_CanExtendEscrowDurationSuccessfully() public {
         vm.startPrank(owner);
 
@@ -299,8 +290,9 @@ contract StakingManagerTest is FlaunchTest {
     /**
      * stake
      */
-
-    function test_CanStakeSuccessfully(uint _amount) public {
+    function test_CanStakeSuccessfully(
+        uint _amount
+    ) public {
         vm.assume(_amount > 0);
         _mintTokensToStake(_amount);
 
@@ -314,7 +306,8 @@ contract StakingManagerTest is FlaunchTest {
         assertEq(stakingToken.balanceOf(address(this)), prevBalance - _amount);
         assertEq(stakingToken.balanceOf(address(stakingManager)), _amount);
 
-        (uint amount, uint timelockedUntil, uint ethRewardsPerTokenSnapshotX128, ) = stakingManager.userPositions(address(this));
+        (uint amount, uint timelockedUntil, uint ethRewardsPerTokenSnapshotX128,) =
+            stakingManager.userPositions(address(this));
         assertEq(amount, _amount);
         assertEq(timelockedUntil, block.timestamp + minStakeDuration);
         assertEq(ethRewardsPerTokenSnapshotX128, stakingManager.globalEthRewardsPerTokenX128());
@@ -331,9 +324,9 @@ contract StakingManagerTest is FlaunchTest {
         _mintTokensToStake(_amountFirstStake);
         stakingManager.stake(_amountFirstStake);
 
-        (, , , uint ethOwed) = stakingManager.userPositions(address(this));
+        (,,, uint ethOwed) = stakingManager.userPositions(address(this));
         assertEq(ethOwed, 0);
-        
+
         // distribute rewards
         _allocateFees(10 ether);
 
@@ -341,7 +334,7 @@ contract StakingManagerTest is FlaunchTest {
         _mintTokensToStake(_amountSecondStake);
         stakingManager.stake(_amountSecondStake);
 
-        (, , , ethOwed) = stakingManager.userPositions(address(this));
+        (,,, ethOwed) = stakingManager.userPositions(address(this));
         // after deducting the creator's share
         assertApproxEqAbs(
             ethOwed,
@@ -363,8 +356,9 @@ contract StakingManagerTest is FlaunchTest {
     /**
      * unstake
      */
-
-    function test_CanUnstakeSuccessfully(uint _amount) public {
+    function test_CanUnstakeSuccessfully(
+        uint _amount
+    ) public {
         vm.assume(_amount > 0);
         // Restrict amount to maintain precision during calculations
         vm.assume(_amount < type(uint128).max);
@@ -374,9 +368,9 @@ contract StakingManagerTest is FlaunchTest {
 
         // distribute rewards
         _allocateFees(10 ether);
-        
+
         // jump to make position unlocked
-        (, uint timelockedUntil, ,) = stakingManager.userPositions(address(this));
+        (, uint timelockedUntil,,) = stakingManager.userPositions(address(this));
         vm.warp(timelockedUntil + 1);
 
         uint prevBalance = address(this).balance;
@@ -387,8 +381,8 @@ contract StakingManagerTest is FlaunchTest {
 
         assertEq(stakingToken.balanceOf(address(this)), _amount);
         assertEq(stakingToken.balanceOf(address(stakingManager)), 0);
-        
-        (uint amount, , , ) = stakingManager.userPositions(address(this));
+
+        (uint amount,,,) = stakingManager.userPositions(address(this));
         assertEq(amount, 0);
         assertEq(stakingManager.totalDeposited(), 0);
         assertApproxEqAbs(
@@ -398,7 +392,9 @@ contract StakingManagerTest is FlaunchTest {
         );
     }
 
-    function test_CannotUnstakeIfStakeIsLocked(uint _amount) public {
+    function test_CannotUnstakeIfStakeIsLocked(
+        uint _amount
+    ) public {
         vm.assume(_amount > 0);
 
         _mintTokensToStake(_amount);
@@ -408,7 +404,9 @@ contract StakingManagerTest is FlaunchTest {
         stakingManager.unstake(_amount);
     }
 
-    function test_CannotUnstakeIfInsufficientBalance(uint _amount) public {
+    function test_CannotUnstakeIfInsufficientBalance(
+        uint _amount
+    ) public {
         vm.assume(_amount > 0);
 
         // stake 1 less than the amount to unstake
@@ -416,7 +414,7 @@ contract StakingManagerTest is FlaunchTest {
         stakingManager.stake(_amount - 1);
 
         // jump to make position unlocked
-        (, uint timelockedUntil, ,) = stakingManager.userPositions(address(this));
+        (, uint timelockedUntil,,) = stakingManager.userPositions(address(this));
         vm.warp(timelockedUntil + 1);
 
         vm.expectRevert(StakingManager.InsufficientBalance.selector);
@@ -426,7 +424,6 @@ contract StakingManagerTest is FlaunchTest {
     /**
      * claim
      */
-
     function test_CanClaimSuccessfully() public {
         _mintTokensToStake(100 ether);
         // First: stake 10 coins
@@ -442,9 +439,9 @@ contract StakingManagerTest is FlaunchTest {
         _allocateFees(90 ether);
 
         // jump to make position unlocked
-        (, uint timelockedUntil, ,) = stakingManager.userPositions(address(this));
+        (, uint timelockedUntil,,) = stakingManager.userPositions(address(this));
         vm.warp(timelockedUntil + 1);
-        
+
         // claim
         uint prevBalance = address(this).balance;
 
@@ -459,16 +456,18 @@ contract StakingManagerTest is FlaunchTest {
             2 wei // allow error upto few wei
         );
 
-        (, , uint pendingETHRewards) = stakingManager.getUserStakeInfo(address(this));
+        (,, uint pendingETHRewards) = stakingManager.getUserStakeInfo(address(this));
         assertEq(pendingETHRewards, 0);
-        (, , uint ethRewardsPerTokenSnapshotX128, ) = stakingManager.userPositions(address(this));
+        (,, uint ethRewardsPerTokenSnapshotX128,) = stakingManager.userPositions(address(this));
         assertEq(ethRewardsPerTokenSnapshotX128, stakingManager.globalEthRewardsPerTokenX128());
     }
 
     /**
      * Internal Helpers
      */
-    function _createERC721(address _recipient) internal returns (uint tokenId_) {
+    function _createERC721(
+        address _recipient
+    ) internal returns (uint tokenId_) {
         // Flaunch another memecoin to mint a tokenId
         address memecoin = positionManager.flaunch(
             PositionManager.FlaunchParams({
@@ -489,7 +488,9 @@ contract StakingManagerTest is FlaunchTest {
         return flaunch.tokenId(memecoin);
     }
 
-    function _allocateFees(uint _amount) internal {
+    function _allocateFees(
+        uint _amount
+    ) internal {
         // Mint ETH to the flETH contract to facilitate unwrapping
         deal(address(this), _amount);
         WETH.deposit{value: _amount}();
@@ -499,7 +500,9 @@ contract StakingManagerTest is FlaunchTest {
         positionManager.allocateFeesMock(PoolId.wrap('test'), address(stakingManager), _amount);
     }
 
-    function _mintTokensToStake(uint _amount) internal {
+    function _mintTokensToStake(
+        uint _amount
+    ) internal {
         stakingToken.mint(address(this), _amount);
         stakingToken.approve(address(stakingManager), type(uint).max);
     }
@@ -507,7 +510,7 @@ contract StakingManagerTest is FlaunchTest {
     /**
      * Deploys a fresh {StakingManager} so that we the tokenId won't already be set.
      */
-    modifier freshManager {
+    modifier freshManager() {
         // Deploy a new {StakingManager} implementation as we will be using a new tokenId
         stakingManager = StakingManager(treasuryManagerFactory.deployManager(managerImplementation));
 

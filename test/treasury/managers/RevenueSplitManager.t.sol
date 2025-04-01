@@ -12,9 +12,7 @@ import {ITreasuryManager} from '@flaunch-interfaces/ITreasuryManager.sol';
 
 import {FlaunchTest} from 'test/FlaunchTest.sol';
 
-
 contract RevenueSplitManagerTest is FlaunchTest {
-
     // The treasury manager
     RevenueSplitManager revenueSplitManager;
     address managerImplementation;
@@ -61,21 +59,13 @@ contract RevenueSplitManagerTest is FlaunchTest {
         _deployImplementation();
 
         // Set up our {TreasuryManagerFactory} and approve our implementation
-        vm.expectRevert(abi.encodeWithSelector(
-            RevenueSplitManager.InvalidRecipientShareTotal.selector,
-            90_00, 100_00
-        ));
+        vm.expectRevert(abi.encodeWithSelector(RevenueSplitManager.InvalidRecipientShareTotal.selector, 90_00, 100_00));
 
         // Initialize our token
         revenueSplitManager.initialize({
-            _flaunchToken: ITreasuryManager.FlaunchToken({
-                flaunch: flaunch,
-                tokenId: tokenId
-            }),
+            _flaunchToken: ITreasuryManager.FlaunchToken({flaunch: flaunch, tokenId: tokenId}),
             _owner: address(this),
-            _data: abi.encode(
-                RevenueSplitManager.InitializeParams(recipientShares)
-            )
+            _data: abi.encode(RevenueSplitManager.InitializeParams(recipientShares))
         });
     }
 
@@ -92,14 +82,9 @@ contract RevenueSplitManagerTest is FlaunchTest {
 
         // Initialize our token
         revenueSplitManager.initialize({
-            _flaunchToken: ITreasuryManager.FlaunchToken({
-                flaunch: flaunch,
-                tokenId: tokenId
-            }),
+            _flaunchToken: ITreasuryManager.FlaunchToken({flaunch: flaunch, tokenId: tokenId}),
             _owner: address(this),
-            _data: abi.encode(
-                RevenueSplitManager.InitializeParams(recipientShares)
-            )
+            _data: abi.encode(RevenueSplitManager.InitializeParams(recipientShares))
         });
     }
 
@@ -183,7 +168,9 @@ contract RevenueSplitManagerTest is FlaunchTest {
         revenueSplitManager.claim();
     }
 
-    function _createERC721(address _recipient) internal returns (uint tokenId_) {
+    function _createERC721(
+        address _recipient
+    ) internal returns (uint tokenId_) {
         // Flaunch another memecoin to mint a tokenId
         address memecoin = positionManager.flaunch(
             PositionManager.FlaunchParams({
@@ -204,19 +191,16 @@ contract RevenueSplitManagerTest is FlaunchTest {
         return flaunch.tokenId(memecoin);
     }
 
-    function _deployWithRecipients(RevenueSplitManager.RecipientShare[] memory _recipientShares) internal {
+    function _deployWithRecipients(
+        RevenueSplitManager.RecipientShare[] memory _recipientShares
+    ) internal {
         _deployImplementation();
 
         // Initialize our token
         revenueSplitManager.initialize({
-            _flaunchToken: ITreasuryManager.FlaunchToken({
-                flaunch: flaunch,
-                tokenId: tokenId
-            }),
+            _flaunchToken: ITreasuryManager.FlaunchToken({flaunch: flaunch, tokenId: tokenId}),
             _owner: address(this),
-            _data: abi.encode(
-                RevenueSplitManager.InitializeParams(_recipientShares)
-            )
+            _data: abi.encode(RevenueSplitManager.InitializeParams(_recipientShares))
         });
     }
 
@@ -235,14 +219,16 @@ contract RevenueSplitManagerTest is FlaunchTest {
         revenueSplitManager = RevenueSplitManager(implementation);
     }
 
-    function _allocateFees(uint _amount) internal {
+    function _allocateFees(
+        uint _amount
+    ) internal {
         // Mint ETH to the flETH contract to facilitate unwrapping
         deal(address(this), _amount);
         WETH.deposit{value: _amount}();
         WETH.transfer(address(positionManager), _amount);
 
         positionManager.allocateFeesMock({
-            _poolId: PoolId.wrap(bytes32('1')),  // Can be mocked to anything
+            _poolId: PoolId.wrap(bytes32('1')), // Can be mocked to anything
             _recipient: payable(address(revenueSplitManager)),
             _amount: _amount
         });

@@ -5,9 +5,8 @@ import {Flaunch} from '@flaunch/Flaunch.sol';
 import {FlayBurner} from '@flaunch/libraries/FlayBurner.sol';
 import {SingleTokenManager} from '@flaunch/treasury/managers/SingleTokenManager.sol';
 
-import {ISnapshotAirdrop} from '@flaunch-interfaces/ISnapshotAirdrop.sol';
 import {IFLETH} from '@flaunch-interfaces/IFLETH.sol';
-
+import {ISnapshotAirdrop} from '@flaunch-interfaces/ISnapshotAirdrop.sol';
 
 /**
  * Allows an ERC721 to be locked inside an onboarding manager that can be claimed by a designated
@@ -18,7 +17,6 @@ import {IFLETH} from '@flaunch-interfaces/IFLETH.sol';
  * to holders via the {ISnapshotAirdrop} contract.
  */
 contract OnboardingManager is SingleTokenManager {
-
     error CannotRescueToken();
     error InsufficientClaimWindow();
     error InvalidClaimer();
@@ -31,7 +29,14 @@ contract OnboardingManager is SingleTokenManager {
     event ManagerInitialized(address indexed _flaunch, uint indexed _tokenId, InitializeParams _params);
     event OnboardeeUpdated(address _onboardee);
 
-    event OnboardeeClaim(address indexed _flaunch, uint indexed _tokenId, address _onboardee, uint _onboardeeAmount, uint _publicAmount, uint _airdropIndex);
+    event OnboardeeClaim(
+        address indexed _flaunch,
+        uint indexed _tokenId,
+        address _onboardee,
+        uint _onboardeeAmount,
+        uint _publicAmount,
+        uint _airdropIndex
+    );
     event OnboardeeReleased(address indexed _flaunch, uint indexed _tokenId, address _onboardee, uint _buyBack);
 
     /**
@@ -72,7 +77,11 @@ contract OnboardingManager is SingleTokenManager {
      * @param _flayBurner The {FlayBurner} contract address
      * @param _airdropClaim The {ISnapshotAirdrop} contract that will distribute claims
      */
-    constructor (address _treasuryManagerFactory, address payable _flayBurner, address _airdropClaim) SingleTokenManager(_treasuryManagerFactory) {
+    constructor(
+        address _treasuryManagerFactory,
+        address payable _flayBurner,
+        address _airdropClaim
+    ) SingleTokenManager(_treasuryManagerFactory) {
         airdropClaim = ISnapshotAirdrop(_airdropClaim);
         flayBurner = FlayBurner(_flayBurner);
     }
@@ -85,7 +94,10 @@ contract OnboardingManager is SingleTokenManager {
      * @param _flaunchToken The Flaunch token that is being deposited
      * @param _data Onboarding variables
      */
-    function _initialize(FlaunchToken calldata _flaunchToken, bytes calldata _data) internal override depositSingleToken(_flaunchToken) {
+    function _initialize(
+        FlaunchToken calldata _flaunchToken,
+        bytes calldata _data
+    ) internal override depositSingleToken(_flaunchToken) {
         // Unpack our initial configuration data
         (InitializeParams memory params) = abi.decode(_data, (InitializeParams));
 
@@ -143,7 +155,9 @@ contract OnboardingManager is SingleTokenManager {
             // a large loss of trading fees. If this happens (onboardee is non-payable contract)
             // then it is possible to update the `onboardee` address.
             (bool sent,) = onboardee.call{value: onboardeeAmount}('');
-            if (!sent) revert OnboardeeUnableToClaimETH();
+            if (!sent) {
+                revert OnboardeeUnableToClaimETH();
+            }
         }
 
         // Determine the remaining amount that will be sent to the public airdrop
@@ -159,8 +173,10 @@ contract OnboardingManager is SingleTokenManager {
             });
         }
 
-         // Emit our onboardee claim event
-        emit OnboardeeClaim(address(flaunchToken.flaunch), flaunchToken.tokenId, onboardee, onboardeeAmount, publicAmount, airdropIndex);
+        // Emit our onboardee claim event
+        emit OnboardeeClaim(
+            address(flaunchToken.flaunch), flaunchToken.tokenId, onboardee, onboardeeAmount, publicAmount, airdropIndex
+        );
     }
 
     /**
@@ -226,7 +242,9 @@ contract OnboardingManager is SingleTokenManager {
      *
      * @param _onboardee The new Onboardee address
      */
-    function setOnboardee(address payable _onboardee) public onlyManagerOwner onlyNotClaimed {
+    function setOnboardee(
+        address payable _onboardee
+    ) public onlyManagerOwner onlyNotClaimed {
         onboardee = _onboardee;
         emit OnboardeeUpdated(_onboardee);
     }
@@ -235,16 +253,17 @@ contract OnboardingManager is SingleTokenManager {
      * This manager handles our Flaunch ERC721 withdrawals from specific function calls. For
      * this reason, we want to ensure that our expected flows are not bypassed with this function.
      */
-    function rescue(FlaunchToken calldata /* _flaunchToken */, address /* _recipient */) public pure override {
+    function rescue(FlaunchToken calldata, /* _flaunchToken */ address /* _recipient */ ) public pure override {
         revert CannotRescueToken();
     }
 
     /**
      * Only allows the function call to be made if the token has not yet been claimed.
      */
-    modifier onlyNotClaimed {
-        if (claimed) revert TokenAlreadyClaimed();
+    modifier onlyNotClaimed() {
+        if (claimed) {
+            revert TokenAlreadyClaimed();
+        }
         _;
     }
-
 }

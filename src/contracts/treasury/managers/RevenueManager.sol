@@ -4,13 +4,11 @@ pragma solidity ^0.8.26;
 import {Flaunch} from '@flaunch/Flaunch.sol';
 import {SingleTokenManager} from '@flaunch/treasury/managers/SingleTokenManager.sol';
 
-
 /**
  * Acts as a middleware for revenue claims, allowing external protocols to build on top of Flaunch
  * and be able to have more granular control over the revenue yielded.
  */
 contract RevenueManager is SingleTokenManager {
-
     error InvalidCreatorAddress();
     error InvalidProtocolFee();
 
@@ -18,7 +16,14 @@ contract RevenueManager is SingleTokenManager {
     event ProtocolRecipientUpdated(address _protocolRecipient);
     event ProtocolFeeUpdated(uint _protocolFee);
     event ManagerInitialized(address indexed _flaunch, uint indexed _tokenId, InitializeParams _params);
-    event RevenueClaimed(address _creator, uint _creatorAmount, bool _creatorSuccess, address _protocol, uint _protocolAmount, bool _protocolSuccess);
+    event RevenueClaimed(
+        address _creator,
+        uint _creatorAmount,
+        bool _creatorSuccess,
+        address _protocol,
+        uint _protocolAmount,
+        bool _protocolSuccess
+    );
 
     /**
      * Parameters passed during manager initialization.
@@ -54,7 +59,9 @@ contract RevenueManager is SingleTokenManager {
      *
      * @param _treasuryManagerFactory The {TreasuryManagerFactory} that will launch this implementation
      */
-    constructor (address _treasuryManagerFactory) SingleTokenManager(_treasuryManagerFactory) {
+    constructor(
+        address _treasuryManagerFactory
+    ) SingleTokenManager(_treasuryManagerFactory) {
         // ..
     }
 
@@ -66,12 +73,17 @@ contract RevenueManager is SingleTokenManager {
      * @param _flaunchToken The Flaunch token that is being deposited
      * @param _data Onboarding variables
      */
-    function _initialize(FlaunchToken calldata _flaunchToken, bytes calldata _data) internal override depositSingleToken(_flaunchToken) {
+    function _initialize(
+        FlaunchToken calldata _flaunchToken,
+        bytes calldata _data
+    ) internal override depositSingleToken(_flaunchToken) {
         // Unpack our initial manager settings
         (InitializeParams memory params) = abi.decode(_data, (InitializeParams));
 
         // Set the end-owner creator, ensuring that it is not a zero address
-        if (params.creator == address(0)) revert InvalidCreatorAddress();
+        if (params.creator == address(0)) {
+            revert InvalidCreatorAddress();
+        }
         creator = params.creator;
 
         // Update our protocol related variables. These will also emit relevant events and
@@ -80,7 +92,9 @@ contract RevenueManager is SingleTokenManager {
             protocolRecipient = params.protocolRecipient;
         }
 
-        if (params.protocolFee > MAX_PROTOCOL_FEE) revert InvalidProtocolFee();
+        if (params.protocolFee > MAX_PROTOCOL_FEE) {
+            revert InvalidProtocolFee();
+        }
         protocolFee = params.protocolFee;
 
         emit ManagerInitialized(address(flaunchToken.flaunch), flaunchToken.tokenId, params);
@@ -119,17 +133,20 @@ contract RevenueManager is SingleTokenManager {
         // Disperse our revenue between the two parties, without validating receipt as we
         // don't want either call to prevent the other receiving fees.
         (bool creatorSuccess,) = payable(creator).call{value: creatorAmount_}('');
-        if (creatorSuccess) { creatorTotalClaim += creatorAmount_; }
+        if (creatorSuccess) {
+            creatorTotalClaim += creatorAmount_;
+        }
 
         bool protocolSuccess;
         if (protocolAmount_ != 0) {
             (protocolSuccess,) = payable(protocolRecipient).call{value: protocolAmount_}('');
-            if (protocolSuccess) { protocolTotalClaim += protocolAmount_; }
+            if (protocolSuccess) {
+                protocolTotalClaim += protocolAmount_;
+            }
         }
 
         emit RevenueClaimed(
-            creator, creatorAmount_, creatorSuccess,
-            protocolRecipient, protocolAmount_, protocolSuccess
+            creator, creatorAmount_, creatorSuccess, protocolRecipient, protocolAmount_, protocolSuccess
         );
     }
 
@@ -141,7 +158,9 @@ contract RevenueManager is SingleTokenManager {
      *
      * @param _protocolRecipient The new protocol recipient address
      */
-    function setProtocolRecipient(address payable _protocolRecipient) public onlyManagerOwner {
+    function setProtocolRecipient(
+        address payable _protocolRecipient
+    ) public onlyManagerOwner {
         protocolRecipient = _protocolRecipient;
         emit ProtocolRecipientUpdated(_protocolRecipient);
     }
@@ -153,7 +172,9 @@ contract RevenueManager is SingleTokenManager {
      *
      * @param _creator The new end-owner creator address
      */
-    function setCreator(address payable _creator) public onlyManagerOwner {
+    function setCreator(
+        address payable _creator
+    ) public onlyManagerOwner {
         if (_creator == address(0)) {
             revert InvalidCreatorAddress();
         }
@@ -170,7 +191,9 @@ contract RevenueManager is SingleTokenManager {
      *
      * @param _protocolFee The new protocol fee
      */
-    function setProtocolFee(uint _protocolFee) public onlyManagerOwner {
+    function setProtocolFee(
+        uint _protocolFee
+    ) public onlyManagerOwner {
         // Ensure that the protocol fee is not greater than 100%
         if (_protocolFee > MAX_PROTOCOL_FEE) {
             revert InvalidProtocolFee();
@@ -179,5 +202,4 @@ contract RevenueManager is SingleTokenManager {
         protocolFee = _protocolFee;
         emit ProtocolFeeUpdated(_protocolFee);
     }
-
 }

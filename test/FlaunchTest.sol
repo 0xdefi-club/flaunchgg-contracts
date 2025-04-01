@@ -1,52 +1,54 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.22;
 
-import {stdStorage, StdStorage} from 'forge-std/Test.sol';
+import {StdStorage, stdStorage} from 'forge-std/Test.sol';
 
 import {IERC20} from '@openzeppelin/contracts/token/ERC20/IERC20.sol';
 
-import {Currency} from '@uniswap/v4-core/src/types/Currency.sol';
-import {Deployers} from '@uniswap/v4-core/test/utils/Deployers.sol';
-import {PoolKey} from '@uniswap/v4-core/src/types/PoolKey.sol';
-import {PoolModifyLiquidityTest} from '@uniswap/v4-core/src/test/PoolModifyLiquidityTest.sol';
 import {IPoolManager, PoolManager} from '@uniswap/v4-core/src/PoolManager.sol';
 import {TickMath} from '@uniswap/v4-core/src/libraries/TickMath.sol';
+import {PoolModifyLiquidityTest} from '@uniswap/v4-core/src/test/PoolModifyLiquidityTest.sol';
+import {Currency} from '@uniswap/v4-core/src/types/Currency.sol';
+import {PoolKey} from '@uniswap/v4-core/src/types/PoolKey.sol';
+import {Deployers} from '@uniswap/v4-core/test/utils/Deployers.sol';
 
-import {BidWall} from '@flaunch/bidwall/BidWall.sol';
-import {BuyBackAndBurnFlay} from '@flaunch/subscribers/BuyBackAndBurnFlay.sol';
-import {FairLaunch} from '@flaunch/hooks/FairLaunch.sol';
-import {FastFlaunchZap} from '@flaunch/zaps/FastFlaunchZap.sol';
-import {FeeDistributor} from '@flaunch/hooks/FeeDistributor.sol';
-import {FeeExemptions} from '@flaunch/hooks/FeeExemptions.sol';
-import {Flaunch} from '@flaunch/Flaunch.sol';
 import {AnyFlaunch} from '@flaunch/AnyFlaunch.sol';
-import {FlaunchFeeExemption} from '@flaunch/price/FlaunchFeeExemption.sol';
-import {FlaunchZap} from '@flaunch/zaps/FlaunchZap.sol';
-import {FlayBurner} from '@flaunch/libraries/FlayBurner.sol';
+import {Flaunch} from '@flaunch/Flaunch.sol';
+import {BidWall} from '@flaunch/bidwall/BidWall.sol';
+
 import {MerkleAirdrop} from '@flaunch/creator-tools/MerkleAirdrop.sol';
 import {SnapshotAirdrop} from '@flaunch/creator-tools/SnapshotAirdrop.sol';
-import {InitialPrice} from '@flaunch/price/InitialPrice.sol';
-import {MemecoinMock} from 'test/mocks/MemecoinMock.sol';
-import {MemecoinTreasury} from '@flaunch/treasury/MemecoinTreasury.sol';
-import {PoolSwap} from '@flaunch/zaps/PoolSwap.sol';
-import {ProtocolRoles} from '@flaunch/libraries/ProtocolRoles.sol';
-import {ReferralEscrow} from '@flaunch/referrals/ReferralEscrow.sol';
+
 import {StaticFeeCalculator} from '@flaunch/fees/StaticFeeCalculator.sol';
+import {FairLaunch} from '@flaunch/hooks/FairLaunch.sol';
+import {FeeDistributor} from '@flaunch/hooks/FeeDistributor.sol';
+import {FeeExemptions} from '@flaunch/hooks/FeeExemptions.sol';
+import {FlayBurner} from '@flaunch/libraries/FlayBurner.sol';
+import {ProtocolRoles} from '@flaunch/libraries/ProtocolRoles.sol';
 import {TokenSupply} from '@flaunch/libraries/TokenSupply.sol';
-import {TreasuryActionManager} from '@flaunch/treasury/ActionManager.sol';
-import {TreasuryManagerFactory} from '@flaunch/treasury/managers/TreasuryManagerFactory.sol';
+import {FlaunchFeeExemption} from '@flaunch/price/FlaunchFeeExemption.sol';
+import {InitialPrice} from '@flaunch/price/InitialPrice.sol';
+import {ReferralEscrow} from '@flaunch/referrals/ReferralEscrow.sol';
+import {BuyBackAndBurnFlay} from '@flaunch/subscribers/BuyBackAndBurnFlay.sol';
+
 import {WhitelistFairLaunch} from '@flaunch/subscribers/WhitelistFairLaunch.sol';
+import {TreasuryActionManager} from '@flaunch/treasury/ActionManager.sol';
+import {MemecoinTreasury} from '@flaunch/treasury/MemecoinTreasury.sol';
+import {TreasuryManagerFactory} from '@flaunch/treasury/managers/TreasuryManagerFactory.sol';
+import {FastFlaunchZap} from '@flaunch/zaps/FastFlaunchZap.sol';
+import {FlaunchZap} from '@flaunch/zaps/FlaunchZap.sol';
+import {PoolSwap} from '@flaunch/zaps/PoolSwap.sol';
+
 import {WhitelistPoolSwap} from '@flaunch/zaps/WhitelistPoolSwap.sol';
+import {MemecoinMock} from 'test/mocks/MemecoinMock.sol';
 
 import {IFLETH} from '@flaunch-interfaces/IFLETH.sol';
 
-import {PositionManagerMock} from './mocks/PositionManagerMock.sol';
 import {AnyPositionManagerMock} from './mocks/AnyPositionManagerMock.sol';
+import {PositionManagerMock} from './mocks/PositionManagerMock.sol';
 import {WETH9} from './tokens/WETH9.sol';
 
-
 contract FlaunchTest is Deployers {
-
     using stdStorage for StdStorage;
 
     bytes4 internal constant UNAUTHORIZED = 0x82b42900;
@@ -91,8 +93,10 @@ contract FlaunchTest is Deployers {
 
     /// Store our deployer address
     address public constant DEPLOYER = 0x7FA9385bE102ac3EAc297483Dd6233D62b3e1496;
-    address payable internal constant VALID_POSITION_MANAGER_ADDRESS = payable(0x3Fdc8d547641A626eC40242196F69754b25D2fdC);
-    address payable internal constant VALID_ANY_POSITION_MANAGER_ADDRESS = payable(0x00000000000000000000000000000000000025dC);
+    address payable internal constant VALID_POSITION_MANAGER_ADDRESS =
+        payable(0x3Fdc8d547641A626eC40242196F69754b25D2fdC);
+    address payable internal constant VALID_ANY_POSITION_MANAGER_ADDRESS =
+        payable(0x00000000000000000000000000000000000025dC);
 
     WETH9 internal WETH;
     WETH9 internal flETH;
@@ -118,18 +122,12 @@ contract FlaunchTest is Deployers {
         flaunch = new Flaunch(address(memecoinImplementation), 'https://api.flaunch.gg/token/');
         anyFlaunch = new AnyFlaunch('https://api.flaunch.gg/token/');
 
-        FeeDistributor.FeeDistribution memory feeDistribution = FeeDistributor.FeeDistribution({
-            swapFee: 1_00,
-            referrer: 5_00,
-            protocol: 10_00,
-            active: true
-        });
+        FeeDistributor.FeeDistribution memory feeDistribution =
+            FeeDistributor.FeeDistribution({swapFee: 1_00, referrer: 5_00, protocol: 10_00, active: true});
 
         // Define our initial token sqrtPriceX96
-        InitialPrice.InitialSqrtPriceX96 memory initialSqrtPriceX96 = InitialPrice.InitialSqrtPriceX96({
-            unflipped: FL_SQRT_PRICE_1_2,
-            flipped: FL_SQRT_PRICE_2_1
-        });
+        InitialPrice.InitialSqrtPriceX96 memory initialSqrtPriceX96 =
+            InitialPrice.InitialSqrtPriceX96({unflipped: FL_SQRT_PRICE_1_2, flipped: FL_SQRT_PRICE_2_1});
 
         // Deploy our flaunch fee exclusion
         flaunchFeeExemption = new FlaunchFeeExemption();
@@ -154,19 +152,23 @@ contract FlaunchTest is Deployers {
         fairLaunch.grantRole(ProtocolRoles.POSITION_MANAGER, VALID_POSITION_MANAGER_ADDRESS);
 
         // Deploy our Locker to a specific address that is valid for our hooks configuration
-        deployCodeTo('PositionManagerMock.sol', abi.encode(
-            address(WETH),
-            address(poolManager),
-            feeDistribution,
-            address(initialPrice),
-            address(this),
-            address(this),
-            governance,
-            address(feeExemptions),
-            actionManager,
-            bidWall,
-            fairLaunch
-        ), VALID_POSITION_MANAGER_ADDRESS);
+        deployCodeTo(
+            'PositionManagerMock.sol',
+            abi.encode(
+                address(WETH),
+                address(poolManager),
+                feeDistribution,
+                address(initialPrice),
+                address(this),
+                address(this),
+                governance,
+                address(feeExemptions),
+                actionManager,
+                bidWall,
+                fairLaunch
+            ),
+            VALID_POSITION_MANAGER_ADDRESS
+        );
 
         positionManager = PositionManagerMock(VALID_POSITION_MANAGER_ADDRESS);
 
@@ -176,18 +178,22 @@ contract FlaunchTest is Deployers {
         positionManager.setFlaunch(address(flaunch));
 
         // Deploy our AnyPositionManagerMock to a specific address that is valid for our hooks configuration
-        deployCodeTo('AnyPositionManagerMock.sol', abi.encode(
-            address(WETH),
-            address(poolManager),
-            feeDistribution,
-            address(initialPrice),
-            address(this),
-            address(this),
-            governance,
-            address(feeExemptions),
-            address(actionManager),
-            address(bidWall)
-        ), VALID_ANY_POSITION_MANAGER_ADDRESS);
+        deployCodeTo(
+            'AnyPositionManagerMock.sol',
+            abi.encode(
+                address(WETH),
+                address(poolManager),
+                feeDistribution,
+                address(initialPrice),
+                address(this),
+                address(this),
+                governance,
+                address(feeExemptions),
+                address(actionManager),
+                address(bidWall)
+            ),
+            VALID_ANY_POSITION_MANAGER_ADDRESS
+        );
 
         anyPositionManager = AnyPositionManagerMock(VALID_ANY_POSITION_MANAGER_ADDRESS);
 
@@ -217,7 +223,15 @@ contract FlaunchTest is Deployers {
         whitelistPoolSwap = new WhitelistPoolSwap(poolManager, address(whitelistFairLaunch));
 
         // Deploy our zaps
-        flaunchZap = new FlaunchZap(positionManager, flaunch, IFLETH(address(flETH)), poolSwap, treasuryManagerFactory, merkleAirdrop, whitelistFairLaunch);
+        flaunchZap = new FlaunchZap(
+            positionManager,
+            flaunch,
+            IFLETH(address(flETH)),
+            poolSwap,
+            treasuryManagerFactory,
+            merkleAirdrop,
+            whitelistFairLaunch
+        );
         fastFlaunchZap = new FastFlaunchZap(positionManager);
 
         // Approve our {FlaunchZap} to register airdrops and whitelists
@@ -226,7 +240,8 @@ contract FlaunchTest is Deployers {
 
         // Deploy and approve our Flay Buy Back subscriber
         flayBurner = new FlayBurner(address(flETH));
-        buyBackAndBurnFlay = new BuyBackAndBurnFlay(address(flETH), address(poolManager), address(positionManager.notifier()));
+        buyBackAndBurnFlay =
+            new BuyBackAndBurnFlay(address(flETH), address(poolManager), address(positionManager.notifier()));
     }
 
     /**
@@ -234,7 +249,9 @@ contract FlaunchTest is Deployers {
      *
      * @dev This should be applied to a constructor.
      */
-    modifier forkBlock(uint blockNumber) {
+    modifier forkBlock(
+        uint blockNumber
+    ) {
         // Generate a mainnet fork
         uint mainnetFork = vm.createFork(vm.rpcUrl('mainnet'));
 
@@ -250,7 +267,9 @@ contract FlaunchTest is Deployers {
         _;
     }
 
-    modifier forkBaseBlock(uint blockNumber) {
+    modifier forkBaseBlock(
+        uint blockNumber
+    ) {
         // Generate a mainnet fork
         uint baseFork = vm.createFork(vm.rpcUrl('base'));
 
@@ -266,7 +285,9 @@ contract FlaunchTest is Deployers {
         _;
     }
 
-    modifier forkBaseSepoliaBlock(uint blockNumber) {
+    modifier forkBaseSepoliaBlock(
+        uint blockNumber
+    ) {
         // Generate a mainnet fork
         uint baseSepoliaFork = vm.createFork(vm.rpcUrl('base_sepolia'));
 
@@ -282,7 +303,9 @@ contract FlaunchTest is Deployers {
         _;
     }
 
-    function _assumeValidAddress(address _address) internal {
+    function _assumeValidAddress(
+        address _address
+    ) internal {
         // Ensure this is not a zero address
         vm.assume(_address != address(0));
 
@@ -348,11 +371,15 @@ contract FlaunchTest is Deployers {
         }
     }
 
-    function _poolKeyZeroForOne(PoolKey memory poolKey) internal view returns (bool) {
+    function _poolKeyZeroForOne(
+        PoolKey memory poolKey
+    ) internal view returns (bool) {
         return Currency.unwrap(poolKey.currency0) == address(WETH);
     }
 
-    function _normalizePoolKey(PoolKey memory poolKey) internal pure returns (PoolKey memory) {
+    function _normalizePoolKey(
+        PoolKey memory poolKey
+    ) internal pure returns (PoolKey memory) {
         if (poolKey.currency0 >= poolKey.currency1) {
             (poolKey.currency0, poolKey.currency1) = (poolKey.currency1, poolKey.currency0);
         }
@@ -364,7 +391,9 @@ contract FlaunchTest is Deployers {
         vm.warp(block.timestamp + 365 days);
     }
 
-    function _getSwapParams(int _amount) internal pure returns (IPoolManager.SwapParams memory) {
+    function _getSwapParams(
+        int _amount
+    ) internal pure returns (IPoolManager.SwapParams memory) {
         return IPoolManager.SwapParams({
             zeroForOne: true,
             amountSpecified: _amount,
@@ -375,11 +404,15 @@ contract FlaunchTest is Deployers {
     /**
      * ..
      */
-    function supplyShare(uint _percent) public pure returns (uint) {
+    function supplyShare(
+        uint _percent
+    ) public pure returns (uint) {
         return TokenSupply.INITIAL_SUPPLY * _percent / 10000;
     }
 
-    modifier flipTokens(bool _flipped) {
+    modifier flipTokens(
+        bool _flipped
+    ) {
         if (_flipped) {
             deployCodeTo('WETH9.sol', abi.encode(), payable(address(0xFFfFfFffFFfffFFfFFfFFFFFffFFFffffFfFFFfF)));
             WETH = WETH9(payable(0xFFfFfFffFFfffFFfFFfFFFFFffFFFffffFfFFFfF));
@@ -390,5 +423,4 @@ contract FlaunchTest is Deployers {
 
         _;
     }
-
 }

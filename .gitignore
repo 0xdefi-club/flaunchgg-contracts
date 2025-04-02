@@ -5,54 +5,6 @@ out/
 # Ignores development repo folders
 broadcast/
 node_modules/
-script/
-
-# ABI handling
-# First, don't ignore the abi directory itself
-!/abi/
-# Then ignore all contents of abi directory
-/abi/*
-# Finally whitelist specific files
-!/abi/AnyFlaunch.json
-!/abi/AnyPositionManager.json
-!/abi/BidWall.json
-!/abi/BurnTokensAction.json
-!/abi/BuyBackAction.json
-!/abi/ClaimFeesAction.json
-!/abi/DistributeAction.json
-!/abi/DynamicFeeCalculator.json
-!/abi/DynamicFeeCalculatorV2.json
-!/abi/FairLaunch.json
-!/abi/FastFlaunchZap.json
-!/abi/FeeExemptions.json
-!/abi/Flaunch.json
-!/abi/FlaunchFeeExemption.json
-!/abi/FlaunchZap.json
-!/abi/FlayHooks.json
-!/abi/HypeFeeCalculator.json
-!/abi/InitialPrice.json
-!/abi/MarketCappedPrice.json
-!/abi/MarketCappedPriceV3.json
-!/abi/Memecoin.json
-!/abi/MemecoinTreasury.json
-!/abi/MerkleAirdrop.json
-!/abi/Notifier.json
-!/abi/OnboardingManager.json
-!/abi/PauseCalculator.json
-!/abi/PoolSwap.json
-!/abi/PositionManager.json
-!/abi/PreventNoFairLaunch.json
-!/abi/ProtocolFeeRecipient.json
-!/abi/RaidManager.json
-!/abi/ReferralEscrow.json
-!/abi/RevenueManager.json
-!/abi/RevenueSplitManager.json
-!/abi/SnapshotAirdrop.json
-!/abi/StaticFeeCalculator.json
-!/abi/StakingManager.json
-!/abi/TreasuryActionManager.json
-!/abi/TreasuryManagerFactory.json
-!/abi/WhitelistFairLaunch.json
 
 # Dotenv file
 .env

@@ -107,7 +107,7 @@ contract DeployScript is Script {
         );
         flaunch = new Flaunch(address(memecoin), baseURI);
         poolSwap = new PoolSwap(IPoolManager(v4_PoolManager_Contract));
-        flaunchPremineZap = new FlaunchPremineZap(positionManager, address(flaunch), flETH_Contract, poolSwap);
+        flaunchPremineZap = new FlaunchPremineZap(positionManager, address(flaunch), nativeToken_Contract, poolSwap);
         buyBackAction = new BuyBackAction(nativeToken_Contract, address(poolSwap));
         burnTokensAction = new BurnTokensAction(nativeToken_Contract);
         referralEscrow = new ReferralEscrow(nativeToken_Contract, address(positionManager));

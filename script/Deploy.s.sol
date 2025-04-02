@@ -24,9 +24,14 @@ import {FastFlaunchZap} from '../src/contracts/zaps/FastFlaunchZap.sol';
 import {FlaunchPremineZap} from '../src/contracts/zaps/FlaunchPremineZap.sol';
 import {PoolSwap} from '../src/contracts/zaps/PoolSwap.sol';
 import {IFeeCalculator} from '../src/interfaces/IFeeCalculator.sol';
+
+import {HookMiner} from './HookMiner.sol';
+
 import {IPoolManager} from '@uniswap/v4-core/src/interfaces/IPoolManager.sol';
+import {Hooks} from '@uniswap/v4-core/src/libraries/Hooks.sol';
 
 import {Script} from 'forge-std/Script.sol';
+import {console} from 'forge-std/console.sol';
 
 contract DeployScript is Script {
     uint privateKey = vm.envUint(string.concat('PRIVATE_KEY_', vm.toString(block.chainid)));
@@ -60,6 +65,8 @@ contract DeployScript is Script {
     Notifier notifier;
     PreventNoFairLaunch preventNoFairLaunch;
 
+    PositionManager.ConstructorParams positionManagerParams;
+
     FeeDistributor.FeeDistribution feeDistribution =
         FeeDistributor.FeeDistribution({swapFee: 100, referrer: 500, protocol: 0, active: true});
 
@@ -70,12 +77,21 @@ contract DeployScript is Script {
             nativeToken_Contract = 0x4200000000000000000000000000000000000006;
             v4_PoolManager_Contract = 0xB952578f3520EE8Ea45b7914994dcf4702cEe578;
             permit2_Contract = 0x000000000022D473030F116dDEE9F6B43aC78BA3;
+            uni_USDC_WETH_Pool = 0x65081CB48d74A32e9CCfED75164b8c09972DBcF1;
+        } else if (block.chainid == 130) {
+            WETH_Contract = 0x4200000000000000000000000000000000000006;
+            USDC_Contract = 0x078D782b760474a361dDA0AF3839290b0EF57AD6;
+            nativeToken_Contract = 0x4200000000000000000000000000000000000006;
+            v4_PoolManager_Contract = 0x1F98400000000000000000000000000000000004;
+            permit2_Contract = 0x000000000022D473030F116dDEE9F6B43aC78BA3;
+            uni_USDC_WETH_Pool = 0x65081CB48d74A32e9CCfED75164b8c09972DBcF1;
         } else if (block.chainid == 80_094) {
             WETH_Contract = 0x2F6F07CDcf3588944Bf4C42aC74ff24bF56e7590;
             USDC_Contract = 0x2F6F07CDcf3588944Bf4C42aC74ff24bF56e7590;
             nativeToken_Contract = 0x2F6F07CDcf3588944Bf4C42aC74ff24bF56e7590;
             v4_PoolManager_Contract = 0x000000000022D473030F116dDEE9F6B43aC78BA3;
             permit2_Contract = 0x000000000022D473030F116dDEE9F6B43aC78BA3;
+            uni_USDC_WETH_Pool = 0x65081CB48d74A32e9CCfED75164b8c09972DBcF1;
         }
     }
 
@@ -90,21 +106,6 @@ contract DeployScript is Script {
         memecoin = new Memecoin(permit2_Contract);
         memecoinTreasury = new MemecoinTreasury();
         staticFeeCalculator = new StaticFeeCalculator();
-        positionManager = new PositionManager(
-            PositionManager.ConstructorParams({
-                nativeToken: nativeToken_Contract,
-                poolManager: IPoolManager(v4_PoolManager_Contract),
-                initialPrice: marketCappedPrice,
-                feeDistribution: feeDistribution,
-                protocolOwner: deployer,
-                protocolFeeRecipient: deployer,
-                flayGovernance: deployer,
-                feeExemptions: feeExemptions,
-                actionManager: actionManager,
-                bidWall: bidWall,
-                fairLaunch: fairLaunch
-            })
-        );
         flaunch = new Flaunch(address(memecoin), baseURI);
         poolSwap = new PoolSwap(IPoolManager(v4_PoolManager_Contract));
         flaunchPremineZap = new FlaunchPremineZap(positionManager, address(flaunch), nativeToken_Contract, poolSwap);
@@ -113,6 +114,21 @@ contract DeployScript is Script {
         referralEscrow = new ReferralEscrow(nativeToken_Contract, address(positionManager));
         fastFlaunchZap = new FastFlaunchZap(positionManager);
         preventNoFairLaunch = new PreventNoFairLaunch(address(notifier));
+
+        positionManagerParams = PositionManager.ConstructorParams({
+            nativeToken: nativeToken_Contract,
+            poolManager: IPoolManager(v4_PoolManager_Contract),
+            initialPrice: marketCappedPrice,
+            feeDistribution: feeDistribution,
+            protocolOwner: deployer,
+            protocolFeeRecipient: deployer,
+            flayGovernance: deployer,
+            feeExemptions: feeExemptions,
+            actionManager: actionManager,
+            bidWall: bidWall,
+            fairLaunch: fairLaunch
+        });
+        positionManager = deployPositionManager();
 
         flaunch.initialize(positionManager, address(memecoinTreasury));
         positionManager.setFlaunch(address(flaunch));
@@ -127,5 +143,23 @@ contract DeployScript is Script {
         referralEscrow.setPoolSwap(address(poolSwap));
 
         vm.stopBroadcast();
+    }
+
+    function deployPositionManager() public returns (PositionManager pm) {
+        uint160 flags = uint160(
+            Hooks.BEFORE_INITIALIZE_FLAG | Hooks.BEFORE_ADD_LIQUIDITY_FLAG | Hooks.AFTER_ADD_LIQUIDITY_FLAG
+                | Hooks.BEFORE_REMOVE_LIQUIDITY_FLAG | Hooks.AFTER_REMOVE_LIQUIDITY_FLAG | Hooks.BEFORE_SWAP_FLAG
+                | Hooks.AFTER_SWAP_FLAG | Hooks.AFTER_DONATE_FLAG | Hooks.BEFORE_SWAP_RETURNS_DELTA_FLAG
+                | Hooks.AFTER_SWAP_RETURNS_DELTA_FLAG
+        );
+        (address hookAddress, bytes32 salt) = HookMiner.find(
+            0x4e59b44847b379578588920cA78FbF26c0B4956C,
+            flags,
+            type(PositionManager).creationCode,
+            abi.encode(positionManagerParams)
+        );
+        pm = new PositionManager{salt: salt}(positionManagerParams);
+        require(address(pm) == hookAddress, 'Invalid hook address');
+        return pm;
     }
 }

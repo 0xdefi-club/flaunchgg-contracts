@@ -21,7 +21,7 @@ call:
 	@time forge script script/CallContract.sol:CallContract $(NETWORK_PARAMS) --slow -vvvv
 
 deploy:
-	@time forge script script/Deploy.s.sol:DeployScript $(NETWORK_PARAMS) --slow -vvvv
+	@time forge script script/Deploy.s.sol:DeployScript $(NETWORK_PARAMS) --slow -vvvvv
 
 deployVerify:
 	@time forge script script/Deploy.s.sol:DeployScript $(NETWORK_PARAMS) --slow -vvvv --verifier blockscout --verifier-url https://unichain-sepolia.blockscout.com/api/ --verify

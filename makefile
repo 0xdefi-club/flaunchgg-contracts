@@ -24,7 +24,7 @@ deploy:
 	@time forge script script/Deploy.s.sol:DeployScript $(NETWORK_PARAMS) --slow -vvvv
 
 deployVerify:
-	@time forge script script/Deploy.s.sol:DeployScript $(NETWORK_PARAMS) --slow -vvvv --verifier blockscout --verifier-url https://unichain-sepolia.blockscout.com/api/ --verify
+	@time forge script script/Deploy.s.sol:DeployScript $(NETWORK_PARAMS) --slow -vvvv --verifier blockscout --verifier-url https://unichain.blockscout.com/api/ --verify
 
 deployERC20:
 	@time forge script script/DeployERC20.sol:DeployERC20 $(NETWORK_PARAMS) --slow -vvvv

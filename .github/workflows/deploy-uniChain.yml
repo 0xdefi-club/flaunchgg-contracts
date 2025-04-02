@@ -1,0 +1,68 @@
+name: Deploy UniChain
+
+on:
+  workflow_dispatch:
+
+jobs:
+  deploy-uniChain:
+    strategy:
+      fail-fast: true
+    runs-on: ubuntu-22.04
+
+    env:
+      CHAIN_ID: 130
+      RPC_130: https://unichain-rpc.publicnode.com
+      WEBHOOK_URL: https://open.larksuite.com/open-apis/bot/v2/hook/50c01fba-3348-41a2-b58d-09d5b5053a31
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Install Foundry
+        uses: foundry-rs/foundry-toolchain@v1
+
+      - name: Remove 'offline = true' from foundry.toml
+        run: sed -i '/offline = true/d' foundry.toml
+
+      # - name: Run Forge build
+      # run: forge build --sizes
+
+      # - name: Run tests
+      # run: forge test -vvv
+
+      - name: Deploy Contract
+        run: |
+          if [ -z "${{ env.RPC_130 }}" ] || [ -z "${{ secrets.PRIVATE_KEY_130 }}" ]; then
+            echo "Error: Configuration for CHAIN_ID=130 not found. Please check RPC_130 and PRIVATE_KEY_130 are set."
+            exit 1
+          fi
+          forge script script/Deploy.s.sol:DeployScript \
+            --slow \
+            --rpc-url ${{ env.RPC_130 }} \
+            --private-key ${{ secrets.PRIVATE_KEY_130 }} \
+            --broadcast --timeout ${{ env.ETH_TIMEOUT }} --non-interactive \
+            --verifier blockscout \
+            --verifier-url https://unichain.blockscout.com/api/ \
+            --verify
+        env:
+          PRIVATE_KEY_130: ${{ secrets.PRIVATE_KEY_130 }}
+          ETH_TIMEOUT: 900
+
+      - name: Gen Addresses
+        uses: sergeysova/jq-action@v2
+        with:
+          cmd: chmod +x ./address.sh && ./address.sh
+
+      - name: Send Addresses via Webhook
+        uses: sergeysova/jq-action@v2
+        with:
+          cmd: |
+            for file in addresses/${{ env.CHAIN_ID }}.json; do
+              json_data=$(jq -r . "$file")
+              
+              webhook_payload=$(jq -n --arg content "$json_data" \
+                '{ msg_type: "text", content: { text: $content } }')
+              
+              curl -X POST -H "Content-Type: application/json" -d "$webhook_payload" "${{ env.WEBHOOK_URL }}"
+            done

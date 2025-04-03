@@ -1,0 +1,9 @@
+[
+  {
+    "name": "execute",
+    "type": "function",
+    "inputs": [],
+    "outputs": [],
+    "stateMutability": "nonpayable"
+  }
+]

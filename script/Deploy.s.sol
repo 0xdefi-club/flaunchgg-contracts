@@ -20,7 +20,7 @@ import {MemecoinTreasury} from '../src/contracts/treasury/MemecoinTreasury.sol';
 import {BurnTokensAction} from '../src/contracts/treasury/actions/BurnTokens.sol';
 import {BuyBackAction} from '../src/contracts/treasury/actions/BuyBack.sol';
 
-// import {FastFlaunchZap} from '../src/contracts/zaps/FastFlaunchZap.sol';
+import {FastFlaunchZap} from '../src/contracts/zaps/FastFlaunchZap.sol';
 import {FlaunchPremineZap} from '../src/contracts/zaps/FlaunchPremineZap.sol';
 import {PoolSwap} from '../src/contracts/zaps/PoolSwap.sol';
 import {IFeeCalculator} from '../src/interfaces/IFeeCalculator.sol';
@@ -62,7 +62,7 @@ contract DeployScript is Script {
     PoolSwap poolSwap;
     FlaunchPremineZap flaunchPremineZap;
     ReferralEscrow referralEscrow;
-    // FastFlaunchZap fastFlaunchZap;
+    FastFlaunchZap fastFlaunchZap;
     MemecoinTreasury memecoinTreasury;
     Memecoin memecoin;
     Notifier notifier;
@@ -107,7 +107,7 @@ contract DeployScript is Script {
         buyBackAction = new BuyBackAction(nativeToken_Contract, address(poolSwap));
         burnTokensAction = new BurnTokensAction(nativeToken_Contract);
         referralEscrow = new ReferralEscrow(nativeToken_Contract, address(positionManager));
-        // fastFlaunchZap = new FastFlaunchZap(positionManager);
+        fastFlaunchZap = new FastFlaunchZap(positionManager);
         preventNoFairLaunch = new PreventNoFairLaunch(address(notifier));
 
         positionManagerParams = PositionManager.ConstructorParams({

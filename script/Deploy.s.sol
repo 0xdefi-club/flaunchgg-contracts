@@ -31,9 +31,13 @@ import {IPoolManager} from '@uniswap/v4-core/src/interfaces/IPoolManager.sol';
 import {Hooks} from '@uniswap/v4-core/src/libraries/Hooks.sol';
 
 import {Script} from 'forge-std/Script.sol';
+
+import {stdJson} from 'forge-std/StdJson.sol';
 import {console} from 'forge-std/console.sol';
 
 contract DeployScript is Script {
+    using stdJson for string;
+
     uint privateKey = vm.envUint(string.concat('PRIVATE_KEY_', vm.toString(block.chainid)));
     address deployer = vm.addr(privateKey);
 
@@ -42,7 +46,6 @@ contract DeployScript is Script {
     address nativeToken_Contract;
     address uni_USDC_WETH_Pool;
     address v4_PoolManager_Contract;
-    address permit2_Contract;
     uint swapFeeThreshold = 100;
     string baseURI = 'https://flaunch.xyz/';
 
@@ -67,32 +70,24 @@ contract DeployScript is Script {
 
     PositionManager.ConstructorParams positionManagerParams;
 
-    FeeDistributor.FeeDistribution feeDistribution =
-        FeeDistributor.FeeDistribution({swapFee: 100, referrer: 500, protocol: 0, active: true});
+    FeeDistributor.FeeDistribution feeDistribution;
 
     function setUp() public {
-        if (block.chainid == 1301) {
-            WETH_Contract = 0x4200000000000000000000000000000000000006;
-            USDC_Contract = 0x4200000000000000000000000000000000000006;
-            nativeToken_Contract = 0x4200000000000000000000000000000000000006;
-            v4_PoolManager_Contract = 0xB952578f3520EE8Ea45b7914994dcf4702cEe578;
-            permit2_Contract = 0x000000000022D473030F116dDEE9F6B43aC78BA3;
-            uni_USDC_WETH_Pool = 0x65081CB48d74A32e9CCfED75164b8c09972DBcF1;
-        } else if (block.chainid == 130) {
-            WETH_Contract = 0x4200000000000000000000000000000000000006;
-            USDC_Contract = 0x078D782b760474a361dDA0AF3839290b0EF57AD6;
-            nativeToken_Contract = 0x4200000000000000000000000000000000000006;
-            v4_PoolManager_Contract = 0x1F98400000000000000000000000000000000004;
-            permit2_Contract = 0x000000000022D473030F116dDEE9F6B43aC78BA3;
-            uni_USDC_WETH_Pool = 0x65081CB48d74A32e9CCfED75164b8c09972DBcF1;
-        } else if (block.chainid == 80_094) {
-            WETH_Contract = 0x2F6F07CDcf3588944Bf4C42aC74ff24bF56e7590;
-            USDC_Contract = 0x2F6F07CDcf3588944Bf4C42aC74ff24bF56e7590;
-            nativeToken_Contract = 0x2F6F07CDcf3588944Bf4C42aC74ff24bF56e7590;
-            v4_PoolManager_Contract = 0x000000000022D473030F116dDEE9F6B43aC78BA3;
-            permit2_Contract = 0x000000000022D473030F116dDEE9F6B43aC78BA3;
-            uni_USDC_WETH_Pool = 0x65081CB48d74A32e9CCfED75164b8c09972DBcF1;
-        }
+        string memory root = vm.projectRoot();
+        string memory path = string.concat(root, '/script/configs/', vm.toString(block.chainid), '.json');
+        string memory configs = vm.readFile(path);
+        WETH_Contract = configs.readAddress('.WETH_Contract');
+        USDC_Contract = configs.readAddress('.USDC_Contract');
+        nativeToken_Contract = configs.readAddress('.nativeToken_Contract');
+        v4_PoolManager_Contract = configs.readAddress('.v4_PoolManager_Contract');
+        uni_USDC_WETH_Pool = configs.readAddress('.uni_USDC_WETH_Pool');
+
+        feeDistribution = FeeDistributor.FeeDistribution({
+            swapFee: uint24(configs.readUint('.swapFee')),
+            referrer: uint24(configs.readUint('.referrerFee')),
+            protocol: uint24(configs.readUint('.protocolFee')),
+            active: true
+        });
     }
 
     function run() public {

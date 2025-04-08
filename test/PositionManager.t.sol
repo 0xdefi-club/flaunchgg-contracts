@@ -151,7 +151,7 @@ contract PositionManagerTest is FlaunchTest {
     }
 
     function test_CannotScheduleFlaunchWithLargeDuration(uint _duration) public {
-        vm.assume(_duration > flaunch.MAX_SCHEDULE_DURATION());
+        vm.assume(_duration < type(uint256).max - block.timestamp && _duration > flaunch.MAX_SCHEDULE_DURATION());
 
         vm.expectRevert();
         positionManager.flaunch(
